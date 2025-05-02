@@ -64,8 +64,13 @@ app.get('/api/fb-token', (req, res) => {
 // Admin endpoint to set the Facebook token
 app.post('/api/admin/set-token', (req, res) => {
     const { token, adminKey } = req.body;
-    // In production, add proper admin authentication
-    if (adminKey !== 'your-secure-admin-key') {
+    // Use environment variable for admin key
+    const validAdminKey = process.env.ADMIN_KEY || 'your-secure-admin-key';
+    console.log('Received admin key:', adminKey);
+    console.log('Valid admin key:', validAdminKey);
+    console.log('Environment ADMIN_KEY:', process.env.ADMIN_KEY);
+    if (adminKey !== validAdminKey) {
+        console.log('Admin key mismatch!');
         return res.status(401).json({ error: 'Unauthorized' });
     }
     setOwnerToken(token);
