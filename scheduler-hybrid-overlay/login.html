@@ -44,7 +44,17 @@
                 
                 if (data.sessionId) {
                     localStorage.setItem('session_id', data.sessionId);
-                    window.location.href = 'index.html';
+                    alert('Login successful! Redirecting...');
+                    // Try multiple redirect methods
+                    try {
+                        window.location.replace('/index.html');
+                    } catch (e) {
+                        window.location.href = '/index.html';
+                    }
+                    // If that doesn't work, try after a short delay
+                    setTimeout(() => {
+                        window.location = '/index.html';
+                    }, 1000);
                 } else {
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
                     errorMessage.style.display = 'block';
