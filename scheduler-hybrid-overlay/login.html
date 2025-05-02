@@ -24,6 +24,11 @@
     </div>
 
     <script>
+        // Check if we're already logged in
+        if (localStorage.getItem('session_id')) {
+            window.location.href = 'index.html';
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -47,11 +52,10 @@
                 console.log('Login response data:', data);
                 
                 if (data.sessionId) {
-                    console.log('Login successful, setting session ID');
-                    // Store the session ID
+                    console.log('Login successful, setting session ID and redirecting');
                     localStorage.setItem('session_id', data.sessionId);
-                    // Force reload the page which will trigger the redirect in index.html
-                    window.location.replace('./');
+                    // Force a full page reload to index.html
+                    window.location.href = 'index.html';
                 } else {
                     console.log('Login failed:', data.error);
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
