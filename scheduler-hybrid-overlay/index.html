@@ -11,16 +11,10 @@
 
 <body>
   <script>
-    // Check for session immediately
-    (function checkSession() {
-      const sessionId = localStorage.getItem('session_id');
-      if (!sessionId) {
-        console.log('No session found, redirecting to login');
-        window.location.replace('login.html');
-        return;
-      }
-      console.log('Session found:', sessionId);
-    })();
+    // Prevent redirect loops by checking current page
+    if (!localStorage.getItem('session_id') && !window.location.pathname.includes('login.html')) {
+      window.location.href = 'login.html';
+    }
   </script>
 
   <!-- Navbar -->

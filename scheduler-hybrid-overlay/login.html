@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <script>
+        // Only redirect if we have a session and we're on the login page
+        if (localStorage.getItem('session_id') && window.location.pathname.includes('login.html')) {
+            window.location.href = 'index.html';
+        }
+    </script>
+
     <div class="login-container">
         <h1>Femme Boss Scheduler</h1>
         <div id="errorMessage" class="error-message" style="display: none; color: red; margin-bottom: 1rem;"></div>
@@ -24,19 +31,12 @@
     </div>
 
     <script>
-        // Check if we're already logged in
-        if (localStorage.getItem('session_id')) {
-            window.location.href = 'index.html';
-        }
-
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
-            
-            console.log('Attempting login with:', username);
             
             try {
                 const response = await fetch('/api/login', {
@@ -47,17 +47,13 @@
                     body: JSON.stringify({ username, password })
                 });
                 
-                console.log('Login response status:', response.status);
                 const data = await response.json();
-                console.log('Login response data:', data);
                 
                 if (data.sessionId) {
-                    console.log('Login successful, setting session ID and redirecting');
                     localStorage.setItem('session_id', data.sessionId);
-                    // Force a full page reload to index.html
-                    window.location.href = 'index.html';
+                    // Use replace to prevent back button issues
+                    window.location.replace('index.html');
                 } else {
-                    console.log('Login failed:', data.error);
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
                     errorMessage.style.display = 'block';
                 }
