@@ -24,42 +24,46 @@ app.use((req, res, next) => {
     next();
 });
 
-// Require authentication for specific routes
-const requireAuth = (req, res, next) => {
-    if (!req.sessionId) {
+// Authentication middleware
+const checkAuth = (req, res, next) => {
+    // Allow access to login page and authentication endpoints
+    if (req.path === '/login.html' || 
+        req.path === '/api/login' || 
+        req.path === '/api/admin/set-token' ||
+        req.path === '/style.css') {
+        return next();
+    }
+
+    const sessionId = req.headers['x-session-id'];
+    if (!sessionId || !validateSession(sessionId)) {
+        // If requesting HTML page, redirect to login
+        if (req.accepts('html')) {
+            return res.redirect('/login.html');
+        }
+        // For API requests, return 401
         return res.status(401).json({ error: 'Authentication required' });
     }
     next();
 };
 
+// Apply authentication check to all routes
+app.use(checkAuth);
+
 // Serve static files
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+
+// Serve static files after auth check
 app.use(express.static(__dirname));
 
 // Basic routes
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+    res.redirect('/login.html');
 });
 
-// Protected dashboard route
-app.get('/dashboard', requireAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Protect all API routes except login
-app.use('/api/*', (req, res, next) => {
-    if (req.path === '/api/login' || req.path === '/api/admin/set-token') {
-        return next();
-    }
-    if (!req.sessionId) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
-    next();
-});
-
-// User login endpoint
+// API routes
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
+    console.log('Login attempt:', username); // Debug log
     
     if (verifyUser(username, password)) {
         const sessionId = createUserSession();
@@ -70,7 +74,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // Protected route to get Facebook token
-app.get('/api/fb-token', requireAuth, (req, res) => {
+app.get('/api/fb-token', (req, res) => {
     const token = getOwnerToken();
     if (!token) {
         return res.status(404).json({ error: 'Token not set' });

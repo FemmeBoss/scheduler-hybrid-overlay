@@ -10,6 +10,12 @@
 </head>
 
 <body>
+  <script>
+    // Check for session
+    if (!localStorage.getItem('session_id')) {
+      window.location.href = '/login.html';
+    }
+  </script>
 
   <!-- Navbar -->
   <nav id="mainNav" class="navbar">
