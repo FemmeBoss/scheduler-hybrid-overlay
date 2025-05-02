@@ -10,13 +10,6 @@
 </head>
 
 <body>
-  <script>
-    // Prevent redirect loops by checking current page
-    if (!localStorage.getItem('session_id') && !window.location.pathname.includes('login.html')) {
-      window.location.href = 'login.html';
-    }
-  </script>
-
   <!-- Navbar -->
   <nav id="mainNav" class="navbar">
     <a href="index.html" class="btn btn-secondary">Dashboard</a>

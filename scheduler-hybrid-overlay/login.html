@@ -7,13 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <script>
-        // Only redirect if we have a session and we're on the login page
-        if (localStorage.getItem('session_id') && window.location.pathname.includes('login.html')) {
-            window.location.href = 'index.html';
-        }
-    </script>
-
     <div class="login-container">
         <h1>Femme Boss Scheduler</h1>
         <div id="errorMessage" class="error-message" style="display: none; color: red; margin-bottom: 1rem;"></div>
@@ -51,8 +44,7 @@
                 
                 if (data.sessionId) {
                     localStorage.setItem('session_id', data.sessionId);
-                    // Use replace to prevent back button issues
-                    window.location.replace('index.html');
+                    window.location.href = 'index.html';
                 } else {
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
                     errorMessage.style.display = 'block';
