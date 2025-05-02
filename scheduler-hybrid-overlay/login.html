@@ -44,9 +44,7 @@
                 
                 if (data.sessionId) {
                     localStorage.setItem('session_id', data.sessionId);
-                    // Simple redirect with full URL
-                    const baseUrl = window.location.origin;
-                    window.location.href = `${baseUrl}/index.html`;
+                    window.location.href = '/dashboard';
                 } else {
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
                     errorMessage.style.display = 'block';
