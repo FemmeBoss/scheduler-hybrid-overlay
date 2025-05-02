@@ -32,21 +32,29 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-// Serve static files from public directory with explicit path
-app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.svg')) {
-            res.set('Content-Type', 'image/svg+xml');
-        }
-    }
-}));
-
-// Serve other static files
+// Serve static files
+app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 app.use(express.static(__dirname));
 
-// Basic route
+// Basic routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// Protected dashboard route
+app.get('/dashboard', requireAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Protect all API routes except login
+app.use('/api/*', (req, res, next) => {
+    if (req.path === '/api/login' || req.path === '/api/admin/set-token') {
+        return next();
+    }
+    if (!req.sessionId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+    next();
 });
 
 // User login endpoint
