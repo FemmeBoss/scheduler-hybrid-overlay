@@ -50,8 +50,8 @@
                     console.log('Login successful, setting session ID');
                     // Store the session ID
                     localStorage.setItem('session_id', data.sessionId);
-                    // Redirect to index page
-                    window.location.href = '/index.html';
+                    // Force reload the page which will trigger the redirect in index.html
+                    window.location.replace('./');
                 } else {
                     console.log('Login failed:', data.error);
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
