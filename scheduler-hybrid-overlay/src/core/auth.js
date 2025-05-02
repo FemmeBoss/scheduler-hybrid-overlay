@@ -1,7 +1,7 @@
 console.log("[DEBUG] Auth Init...");
 
 const appId = '1198964715071787'; // ✅ Your real App ID
-const redirectUri = 'https://7e22-2603-8080-e800-21-7427-833-6b1b-152e.ngrok-free.app'; // ✅ Your NGROK
+const redirectUri = 'https://femme-boss-scheduler.onrender.com/auth/callback'; // Updated redirect URI
 
 // Event listener for login button to initiate OAuth flow
 document.getElementById('loginBtn')?.addEventListener('click', () => {
