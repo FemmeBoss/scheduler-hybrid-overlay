@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Time Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Manage Default Time Settings</h1>
+
+  <div>
+    <label for="timezoneSelect">Select Your Timezone:</label><br>
+    <select id="timezoneSelect">
+      <option value="UTC">UTC</option>
+      <option value="America/New_York">America/New_York</option>
+      <option value="America/Los_Angeles">America/Los_Angeles</option>
+      <option value="Europe/London">Europe/London</option>
+    </select>
+    <button id="saveTimezone" class="btn-primary">Save Timezone</button>
+  </div>
+
+  <script type="module">
+    import { saveUserTimeSetting, getUserTimeSetting } from '/src/features/timeSettings.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const select = document.getElementById('timezoneSelect');
+      const saved = getUserTimeSetting();
+      if (saved) select.value = saved;
+
+      document.getElementById('saveTimezone').addEventListener('click', () => {
+        saveUserTimeSetting(select.value);
+        alert(`Timezone saved: ${select.value}`);
+      });
+    });
+  </script>
+
+</body>
+</html>
