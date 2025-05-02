@@ -1,23 +1,16 @@
 {
   "name": "scheduler-hybrid-overlay",
   "version": "1.0.0",
-  "description": "📦 Full offline-ready, async-batched, drag & drop CSV post scheduler system.",
-  "main": "offlineHandler.js",
   "type": "module",
+  "description": "Facebook/Instagram Post Scheduler",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0"
-  },
-  "devDependencies": {
-    "browser-sync": "^3.0.4"
+    "express": "^4.18.2"
   }
 }

@@ -4,12 +4,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { createUserSession, validateSession, getOwnerToken, setOwnerToken } from './src/core/tokenManager.js';
-
-const app = express();
-const port = process.env.PORT || 3000;
+import { verifyUser } from './src/core/users.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const app = express();
+const port = process.env.PORT || 3000;
 
 // Enable JSON body parsing
 app.use(express.json());
@@ -22,6 +23,14 @@ app.use((req, res, next) => {
     }
     next();
 });
+
+// Require authentication for specific routes
+const requireAuth = (req, res, next) => {
+    if (!req.sessionId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+    next();
+};
 
 // Serve static files from public directory with explicit path
 app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
@@ -37,23 +46,23 @@ app.use(express.static(__dirname));
 
 // Basic route
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
 // User login endpoint
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    // Add your own authentication logic here
-    // For now, we'll accept any login
-    const sessionId = createUserSession();
-    res.json({ sessionId });
+    
+    if (verifyUser(username, password)) {
+        const sessionId = createUserSession();
+        res.json({ sessionId });
+    } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+    }
 });
 
-// Facebook token endpoints
-app.get('/api/fb-token', (req, res) => {
-    if (!req.sessionId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+// Protected route to get Facebook token
+app.get('/api/fb-token', requireAuth, (req, res) => {
     const token = getOwnerToken();
     if (!token) {
         return res.status(404).json({ error: 'Token not set' });
