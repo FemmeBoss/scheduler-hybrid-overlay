@@ -63,12 +63,15 @@ app.get('/', (req, res) => {
 // API routes
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    console.log('Login attempt:', username); // Debug log
+    console.log('Login attempt:', username);
+    console.log('Request body:', req.body);
     
     if (verifyUser(username, password)) {
+        console.log('Login successful for:', username);
         const sessionId = createUserSession();
         res.json({ sessionId });
     } else {
+        console.log('Login failed for:', username);
         res.status(401).json({ error: 'Invalid credentials' });
     }
 });

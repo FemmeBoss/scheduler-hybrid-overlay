@@ -31,6 +31,8 @@
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
             
+            console.log('Attempting login with:', username);
+            
             try {
                 const response = await fetch('/api/login', {
                     method: 'POST',
@@ -40,14 +42,18 @@
                     body: JSON.stringify({ username, password })
                 });
                 
+                console.log('Login response status:', response.status);
                 const data = await response.json();
+                console.log('Login response data:', data);
                 
                 if (data.sessionId) {
+                    console.log('Login successful, setting session ID');
                     // Store the session ID
                     localStorage.setItem('session_id', data.sessionId);
-                    // Redirect to dashboard
-                    window.location.href = '/dashboard';
+                    // Redirect to index page
+                    window.location.href = '/index.html';
                 } else {
+                    console.log('Login failed:', data.error);
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
                     errorMessage.style.display = 'block';
                 }
