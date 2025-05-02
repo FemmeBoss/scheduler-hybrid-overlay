@@ -3,6 +3,8 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import { createUserSession, validateSession, getOwnerToken, setOwnerToken } from './src/core/tokenManager.js';
 import { verifyUser } from './src/core/users.js';
 
@@ -12,12 +14,20 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Enable JSON body parsing
+// Rate limiting
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 login attempts per window
+    message: { error: 'Too many login attempts, please try again later' }
+});
+
+// Enable JSON body parsing and cookies
 app.use(express.json());
+app.use(cookieParser());
 
 // Session middleware
 app.use((req, res, next) => {
-    const sessionId = req.headers['x-session-id'] || req.query.session_id;
+    const sessionId = req.cookies.sessionId || req.headers['x-session-id'] || req.query.session_id;
     if (sessionId && validateSession(sessionId)) {
         req.sessionId = sessionId;
     }
@@ -34,7 +44,7 @@ const checkAuth = (req, res, next) => {
         return next();
     }
 
-    const sessionId = req.headers['x-session-id'];
+    const sessionId = req.cookies.sessionId || req.headers['x-session-id'];
     if (!sessionId || !validateSession(sessionId)) {
         // If requesting HTML page, redirect to login
         if (req.accepts('html')) {
@@ -57,7 +67,7 @@ app.use(express.static(__dirname));
 
 // Auth middleware for protected routes
 const requireAuth = (req, res, next) => {
-    const sessionId = req.headers['x-session-id'] || req.query.session_id;
+    const sessionId = req.cookies.sessionId || req.headers['x-session-id'] || req.query.session_id;
     if (!sessionId || !validateSession(sessionId)) {
         return res.redirect('/login.html');
     }
@@ -66,7 +76,7 @@ const requireAuth = (req, res, next) => {
 
 // Basic routes
 app.get('/', (req, res) => {
-    const sessionId = req.headers['x-session-id'] || req.query.session_id;
+    const sessionId = req.cookies.sessionId || req.headers['x-session-id'] || req.query.session_id;
     if (sessionId && validateSession(sessionId)) {
         res.redirect('/dashboard');
     } else {
@@ -80,7 +90,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
 });
 
 app.get('/login.html', (req, res) => {
-    const sessionId = req.headers['x-session-id'] || req.query.session_id;
+    const sessionId = req.cookies.sessionId || req.headers['x-session-id'] || req.query.session_id;
     if (sessionId && validateSession(sessionId)) {
         res.redirect('/dashboard');
     } else {
@@ -89,14 +99,23 @@ app.get('/login.html', (req, res) => {
 });
 
 // API routes
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    console.log('Login attempt:', username);
-    console.log('Request body:', req.body);
+app.post('/api/login', loginLimiter, (req, res) => {
+    const { username } = req.body;
+    // Only log username, never log passwords
+    console.log('Login attempt for:', username);
     
-    if (verifyUser(username, password)) {
+    if (verifyUser(username, req.body.password)) {
         console.log('Login successful for:', username);
         const sessionId = createUserSession();
+        
+        // Set secure cookie
+        res.cookie('sessionId', sessionId, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+        
         res.json({ sessionId });
     } else {
         console.log('Login failed for:', username);
@@ -129,6 +148,28 @@ app.post('/api/admin/set-token', requireAuth, (req, res) => {
 app.get('/auth/callback', (req, res) => {
     // Redirect back to the main page
     res.redirect('/');
+});
+
+// Password change endpoint
+app.post('/api/change-password', requireAuth, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const username = getUserFromSession(req.sessionId);
+    
+    if (!username || !verifyUser(username, currentPassword)) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    
+    if (!newPassword || newPassword.length < 12) {
+        return res.status(400).json({ error: 'New password must be at least 12 characters long' });
+    }
+    
+    try {
+        updateUserPassword(username, newPassword);
+        res.json({ success: true, message: 'Password updated successfully' });
+    } catch (error) {
+        console.error('Password update failed:', error);
+        res.status(500).json({ error: 'Failed to update password' });
+    }
 });
 
 // Start the server

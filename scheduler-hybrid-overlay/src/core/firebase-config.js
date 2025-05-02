@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // --- Firebase Config ---
 const firebaseConfig = {
-  apiKey: "AIzaSyCUDcSDIlBN62KJHYNaB4Lr_cW404gF1gY",
+  apiKey: process.env.FIREBASE_API_KEY,
   authDomain: "femme-boss-scheduler.firebaseapp.com",
   projectId: "femme-boss-scheduler",
   storageBucket: "femme-boss-scheduler.firebasestorage.app",
