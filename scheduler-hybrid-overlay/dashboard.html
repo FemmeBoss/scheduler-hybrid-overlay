@@ -10,6 +10,24 @@
 </head>
 
 <body>
+  <script>
+    // Check for session and include it in all fetch requests
+    const sessionId = localStorage.getItem('session_id');
+    if (!sessionId) {
+      window.location.href = '/login.html';
+    } else {
+      // Add session ID to all fetch requests
+      const originalFetch = window.fetch;
+      window.fetch = function(url, options = {}) {
+        options.headers = {
+          ...options.headers,
+          'x-session-id': sessionId
+        };
+        return originalFetch(url, options);
+      };
+    }
+  </script>
+
   <!-- Navbar -->
   <nav id="mainNav" class="navbar">
     <a href="dashboard.html" class="btn btn-secondary active">Dashboard</a>
@@ -176,12 +194,5 @@
   <!-- ✅ Script goes here, after EVERYTHING -->
   <script type="module" src="./src/main.js"></script>
   <script type="module" src="./src/core/igPublisher.js"></script>
-
-  <script>
-    // Check for session
-    if (!localStorage.getItem('session_id')) {
-      window.location.href = '/login.html';
-    }
-  </script>
 </body>
 </html> 

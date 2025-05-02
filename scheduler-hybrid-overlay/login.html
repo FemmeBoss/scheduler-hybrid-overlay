@@ -44,7 +44,8 @@
                 
                 if (data.sessionId) {
                     localStorage.setItem('session_id', data.sessionId);
-                    window.location.href = '/dashboard';
+                    // Redirect to dashboard with session ID
+                    window.location.href = `/dashboard?session_id=${data.sessionId}`;
                 } else {
                     errorMessage.textContent = data.error || 'Login failed. Please check your credentials.';
                     errorMessage.style.display = 'block';
