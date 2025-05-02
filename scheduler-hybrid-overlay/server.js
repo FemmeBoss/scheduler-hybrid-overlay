@@ -27,6 +27,12 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Facebook OAuth callback route
+app.get('/auth/callback', (req, res) => {
+  // Redirect back to the main page
+  res.redirect('/');
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`🌐 Server running on port ${port}`);
