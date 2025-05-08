@@ -131,15 +131,21 @@
         
         if (res.ok) {
           // Check if we already have a Facebook token
-          const fbToken = getToken();
-          if (fbToken) {
-            // If we have both admin login and Facebook token, go to dashboard
+          try {
+            const fbToken = getToken();
+            if (fbToken) {
+              // If we have both admin login and Facebook token, go to dashboard
+              window.location.href = '/';
+            } else {
+              // If we only have admin login, prompt for Facebook connection
+              document.getElementById('loginBtn').style.display = 'block';
+              errorDiv.textContent = 'Please connect your Facebook account';
+              errorDiv.style.color = '#166fe5';
+            }
+          } catch (error) {
+            // If getToken fails, just proceed to dashboard
+            console.log('No Facebook token found, proceeding to dashboard');
             window.location.href = '/';
-          } else {
-            // If we only have admin login, prompt for Facebook connection
-            document.getElementById('loginBtn').style.display = 'block';
-            errorDiv.textContent = 'Please connect your Facebook account';
-            errorDiv.style.color = '#166fe5';
           }
         } else {
           errorDiv.textContent = data.error || `Login failed (${res.status})`;
