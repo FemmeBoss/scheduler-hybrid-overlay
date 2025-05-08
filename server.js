@@ -13,7 +13,20 @@ const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
+
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
   resave: false,
@@ -47,7 +60,7 @@ try {
   process.exit(1);
 }
 
-// Login route
+// API Routes
 app.post('/api/login', (req, res) => {
   console.log('Login attempt:', {
     receivedUsername: req.body.username ? 'provided' : 'not provided',
