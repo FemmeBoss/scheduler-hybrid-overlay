@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Profile</h1>
+
+  <div id="profileDetails">
+    <p><strong>Facebook Account:</strong> Loading...</p>
+    <p><strong>Connected Pages:</strong> Loading...</p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const profileDiv = document.getElementById('profileDetails');
+      if (!profileDiv) return; // ➔ graceful fallback
+
+      const token = localStorage.getItem('fb_access_token');
+      if (!token) {
+        profileDiv.innerHTML = "<p>Please connect your Facebook account.</p>";
+        return;
+      }
+
+      profileDiv.innerHTML = `
+        <p><strong>Access Token Found ✅</strong></p>
+        <p>Use the Connect page to manage Pages.</p>
+      `;
+    });
+  </script>
+
+</body>
+</html>

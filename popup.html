@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload and Build CSV - Scheduler Hybrid</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>📦 Create Scheduler CSV</h1>
+
+  <div class="form-section">
+    <label for="imageInput"><strong>Upload Images (1-20):</strong></label><br>
+    <input type="file" id="imageInput" accept="image/*" multiple>
+  </div>
+
+  <div class="form-section">
+    <label for="captions"><strong>Captions (one per line):</strong></label><br>
+    <textarea id="captions" rows="6" placeholder="One caption per line..."></textarea>
+  </div>
+
+  <div class="form-section">
+    <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label><br>
+    <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-05-01T15:00"></textarea>
+  </div>
+
+  <div class="form-section">
+    <button id="processBtn" class="btn-primary">Generate CSV 📥</button>
+  </div>
+
+  <div id="popup" style="display:none;"></div>
+
+  <script type="module" src="./src/features/popup.js"></script>
+
+</body>
+</html>
