@@ -111,15 +111,14 @@ try {
 }
 
 // API Routes
-app.post('/api/login', (req, res) => {
-  console.log('Login attempt received:', {
-    body: req.body,
-    headers: req.headers,
-    session: {
-      id: req.session.id,
-      authenticated: req.session.authenticated,
-      hasToken: !!req.session.token
-    }
+app.post('/api/login', async (req, res) => {
+  console.log('=== Login Request Received ===');
+  console.log('Headers:', req.headers);
+  console.log('Body:', { ...req.body, password: '****' });
+  console.log('Session before:', {
+    id: req.session.id,
+    authenticated: req.session.authenticated,
+    hasToken: !!req.session.token
   });
   
   const { username, password } = req.body;
@@ -141,15 +140,30 @@ app.post('/api/login', (req, res) => {
     req.session.authenticated = true;
     req.session.token = secrets.permanentToken;
     
-    // Force session save
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.status(500).json({ error: 'Failed to save session' });
-      }
-      console.log('Session saved successfully');
+    try {
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session save error:', err);
+            reject(err);
+          } else {
+            console.log('Session saved successfully');
+            resolve();
+          }
+        });
+      });
+      
+      console.log('Session after save:', {
+        id: req.session.id,
+        authenticated: req.session.authenticated,
+        hasToken: !!req.session.token
+      });
+      
       res.json({ success: true });
-    });
+    } catch (err) {
+      console.error('Failed to save session:', err);
+      res.status(500).json({ error: 'Failed to save session' });
+    }
   } else {
     console.log('Login failed: Invalid credentials');
     res.status(401).json({ error: 'Invalid credentials' });

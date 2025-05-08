@@ -112,10 +112,11 @@
       const password = document.getElementById('password').value;
       const errorDiv = document.getElementById('error');
       
-      console.log('Attempting login with:', { username, password: '****' });
+      console.log('Starting login attempt...');
       
       try {
-        const res = await fetch(`${window.location.origin}/api/login`, {
+        console.log('Preparing fetch request...');
+        const response = await fetch(`${window.location.origin}/api/login`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -125,20 +126,28 @@
           credentials: 'include'
         });
         
-        console.log('Login response status:', res.status);
-        const data = await res.json();
-        console.log('Login response data:', data);
+        console.log('Fetch request completed, status:', response.status);
         
-        if (res.ok) {
-          // After successful login, redirect to dashboard
+        let data;
+        try {
+          data = await response.json();
+          console.log('Response data:', data);
+        } catch (jsonError) {
+          console.error('Error parsing JSON response:', jsonError);
+          errorDiv.textContent = 'Invalid server response';
+          return;
+        }
+        
+        if (response.ok) {
+          console.log('Login successful, redirecting...');
           window.location.href = '/';
         } else {
-          errorDiv.textContent = data.error || `Login failed (${res.status})`;
           console.error('Login failed:', data);
+          errorDiv.textContent = data.error || `Login failed (${response.status})`;
         }
       } catch (error) {
-        console.error('Login error:', error);
-        errorDiv.textContent = `An error occurred: ${error.message}`;
+        console.error('Network or other error:', error);
+        errorDiv.textContent = `Error: ${error.message}`;
       }
     });
   </script>
