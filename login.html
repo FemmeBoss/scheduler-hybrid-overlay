@@ -116,6 +116,9 @@
       
       try {
         console.log('Preparing fetch request...');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await fetch(`${window.location.origin}/api/login`, {
           method: 'POST',
           headers: { 
@@ -123,9 +126,11 @@
             'Accept': 'application/json'
           },
           body: JSON.stringify({ username, password }),
-          credentials: 'include'
+          credentials: 'include',
+          signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
         console.log('Fetch request completed, status:', response.status);
         
         let data;
@@ -147,7 +152,13 @@
         }
       } catch (error) {
         console.error('Network or other error:', error);
-        errorDiv.textContent = `Error: ${error.message}`;
+        if (error.name === 'AbortError') {
+          errorDiv.textContent = 'Request timed out. Please try again.';
+        } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+          errorDiv.textContent = 'Network error. Please check your connection.';
+        } else {
+          errorDiv.textContent = `Error: ${error.message}`;
+        }
       }
     });
   </script>
