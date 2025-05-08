@@ -132,7 +132,7 @@
         if (res.ok) {
           // Check if we already have a Facebook token
           try {
-            const fbToken = getToken();
+            const fbToken = await getToken();
             if (fbToken) {
               // If we have both admin login and Facebook token, go to dashboard
               window.location.href = '/';
