@@ -56,7 +56,7 @@ export function getToken() {
   if (token) {
     return token;
   } else {
-    console.error("[ERROR] No access token found in localStorage.");
+    console.log("[INFO] No Facebook token found - user needs to connect Facebook");
     return null;
   }
 }
