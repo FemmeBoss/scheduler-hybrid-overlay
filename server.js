@@ -37,13 +37,24 @@ app.use((req, res, next) => {
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
-  resave: false,
+  resave: true,
   saveUninitialized: true,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
+
+// Add session debugging middleware
+app.use((req, res, next) => {
+  console.log('Session state:', {
+    id: req.session.id,
+    authenticated: req.session.authenticated,
+    hasToken: !!req.session.token
+  });
+  next();
+});
 
 // Read secrets from environment variables or secrets.json
 let secrets;
@@ -73,7 +84,11 @@ app.post('/api/login', (req, res) => {
   console.log('Login attempt received:', {
     body: req.body,
     headers: req.headers,
-    session: req.session
+    session: {
+      id: req.session.id,
+      authenticated: req.session.authenticated,
+      hasToken: !!req.session.token
+    }
   });
   
   const { username, password } = req.body;
@@ -94,7 +109,16 @@ app.post('/api/login', (req, res) => {
     console.log('Login successful for user:', username);
     req.session.authenticated = true;
     req.session.token = secrets.permanentToken;
-    res.json({ success: true });
+    
+    // Force session save
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to save session' });
+      }
+      console.log('Session saved successfully');
+      res.json({ success: true });
+    });
   } else {
     console.log('Login failed: Invalid credentials');
     res.status(401).json({ error: 'Invalid credentials' });
@@ -103,9 +127,17 @@ app.post('/api/login', (req, res) => {
 
 // Check authentication middleware
 const requireAuth = (req, res, next) => {
+  console.log('Auth check:', {
+    sessionId: req.session.id,
+    authenticated: req.session.authenticated,
+    hasToken: !!req.session.token,
+    path: req.path
+  });
+  
   if (req.session.authenticated) {
     next();
   } else {
+    console.log('Auth failed, redirecting to login');
     res.redirect('/login.html');
   }
 };
