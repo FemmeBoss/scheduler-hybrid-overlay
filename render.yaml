@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: femme-boss-social-scheduler
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: FACEBOOK_PERMANENT_TOKEN
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: NODE_ENV
+        value: production
+    url: https://femme-boss-social-scheduler.onrender.com 
