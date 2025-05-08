@@ -112,8 +112,13 @@
       const password = document.getElementById('password').value;
       const errorDiv = document.getElementById('error');
       
+      // Get the base URL dynamically
+      const baseUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:7248'
+        : 'https://femme-boss-social-scheduler.onrender.com';
+      
       try {
-        const res = await fetch('/api/login', {
+        const res = await fetch(`${baseUrl}/api/login`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
