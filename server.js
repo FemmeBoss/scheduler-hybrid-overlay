@@ -11,6 +11,15 @@ const port = process.env.PORT || 7248;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Log environment variables at startup
+console.log('Environment check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  ADMIN_USERNAME_SET: process.env.ADMIN_USERNAME ? 'yes' : 'no',
+  ADMIN_PASSWORD_SET: process.env.ADMIN_PASSWORD ? 'yes' : 'no',
+  SESSION_SECRET_SET: process.env.SESSION_SECRET ? 'yes' : 'no',
+  FACEBOOK_TOKEN_SET: process.env.FACEBOOK_PERMANENT_TOKEN ? 'yes' : 'no'
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
