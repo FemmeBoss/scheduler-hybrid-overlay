@@ -131,6 +131,14 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Check authentication status
+app.get('/api/check-auth', (req, res) => {
+  res.json({
+    authenticated: req.session.authenticated || false,
+    token: req.session.token || null
+  });
+});
+
 // Serve static files after API routes
 app.use(express.static(__dirname));
 
