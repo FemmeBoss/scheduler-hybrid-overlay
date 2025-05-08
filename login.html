@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Femme Boss Social Scheduler - Login</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
   <style>
     .login-container {
       max-width: 400px;
@@ -84,8 +84,8 @@
 <body>
   <div class="login-container">
     <div class="social-icons">
-      <img src="icons/fb-icon.png" alt="Facebook" class="logo">
-      <img src="icons/ig-icon.png" alt="Instagram" class="logo">
+      <img src="/icons/fb-icon.png" alt="Facebook" class="logo">
+      <img src="/icons/ig-icon.png" alt="Instagram" class="logo">
     </div>
     <h2>Welcome Back</h2>
     <form id="loginForm">
@@ -103,7 +103,7 @@
   </div>
 
   <script type="module">
-    import { getToken } from './src/core/auth.js';
+    import { getToken } from '/src/core/auth.js';
 
     // Admin login handler
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -145,6 +145,6 @@
       }
     });
   </script>
-  <script src="src/core/auth.js" type="module"></script>
+  <script src="/src/core/auth.js" type="module"></script>
 </body>
 </html> 
