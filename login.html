@@ -33,6 +33,7 @@
       font-size: 1rem;
       cursor: pointer;
       transition: background 0.2s;
+      margin-bottom: 1rem;
     }
     .login-container button:hover {
       background: #4f46e5;
@@ -56,6 +57,28 @@
       width: 40px;
       height: 40px;
     }
+    .divider {
+      margin: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #666;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    .divider span {
+      padding: 0 1rem;
+    }
+    #loginBtn {
+      background: #1877f2;
+    }
+    #loginBtn:hover {
+      background: #166fe5;
+    }
   </style>
 </head>
 <body>
@@ -66,13 +89,23 @@
     </div>
     <h2>Welcome Back</h2>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Login</button>
+      <input type="text" id="username" placeholder="Admin Username" required />
+      <input type="password" id="password" placeholder="Admin Password" required />
+      <button type="submit">Admin Login</button>
       <div id="error" class="error"></div>
     </form>
+    
+    <div class="divider"><span>or</span></div>
+    
+    <button id="loginBtn" type="button">
+      Connect with Facebook
+    </button>
   </div>
-  <script>
+
+  <script type="module">
+    import { getToken } from './src/core/auth.js';
+
+    // Admin login handler
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('username').value;
@@ -92,8 +125,17 @@
         const data = await res.json();
         
         if (res.ok) {
-          // Redirect to the main application
-          window.location.href = '/';
+          // Check if we already have a Facebook token
+          const fbToken = getToken();
+          if (fbToken) {
+            // If we have both admin login and Facebook token, go to dashboard
+            window.location.href = '/';
+          } else {
+            // If we only have admin login, prompt for Facebook connection
+            document.getElementById('loginBtn').style.display = 'block';
+            errorDiv.textContent = 'Please connect your Facebook account';
+            errorDiv.style.color = '#166fe5';
+          }
         } else {
           errorDiv.textContent = data.error || 'Login failed';
         }
@@ -103,5 +145,6 @@
       }
     });
   </script>
+  <script src="src/core/auth.js" type="module"></script>
 </body>
 </html> 
