@@ -52,25 +52,14 @@ window.addEventListener('load', () => {
 
 // Define and export the getToken function
 export async function getToken() {
-  // First check localStorage for OAuth token
-  const oauthToken = localStorage.getItem('fb_access_token');
-  if (oauthToken) {
-    return oauthToken;
-  }
-
   try {
-    // If no OAuth token, check if we're authenticated with permanent token
     const res = await fetch('/api/check-auth');
     const data = await res.json();
-    
     if (data.authenticated && data.token) {
-      console.log("[INFO] Using permanent token from session");
       return data.token;
     }
   } catch (err) {
-    console.log("[INFO] No permanent token found");
+    console.error("Error getting token:", err);
   }
-
-  console.log("[INFO] No Facebook token found");
   return null;
 }

@@ -122,7 +122,7 @@
             'Accept': 'application/json'
           },
           body: JSON.stringify({ username, password }),
-          credentials: 'include'  // Add this to include cookies
+          credentials: 'include'
         });
         
         console.log('Login response status:', res.status);
@@ -130,23 +130,8 @@
         console.log('Login response data:', data);
         
         if (res.ok) {
-          // Check if we already have a Facebook token
-          try {
-            const fbToken = await getToken();
-            if (fbToken) {
-              // If we have both admin login and Facebook token, go to dashboard
-              window.location.href = '/';
-            } else {
-              // If we only have admin login, prompt for Facebook connection
-              document.getElementById('loginBtn').style.display = 'block';
-              errorDiv.textContent = 'Please connect your Facebook account';
-              errorDiv.style.color = '#166fe5';
-            }
-          } catch (error) {
-            // If getToken fails, just proceed to dashboard
-            console.log('No Facebook token found, proceeding to dashboard');
-            window.location.href = '/';
-          }
+          // After successful login, redirect to dashboard
+          window.location.href = '/';
         } else {
           errorDiv.textContent = data.error || `Login failed (${res.status})`;
           console.error('Login failed:', data);
