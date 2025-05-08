@@ -43,14 +43,27 @@
       font-size: 0.95rem;
     }
     .logo {
-      max-width: 200px;
+      max-width: 100px;
       margin-bottom: 2rem;
+    }
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .social-icons img {
+      width: 40px;
+      height: 40px;
     }
   </style>
 </head>
 <body>
   <div class="login-container">
-    <img src="icons/logo.png" alt="Femme Boss Logo" class="logo">
+    <div class="social-icons">
+      <img src="icons/fb-icon.png" alt="Facebook" class="logo">
+      <img src="icons/ig-icon.png" alt="Instagram" class="logo">
+    </div>
     <h2>Welcome Back</h2>
     <form id="loginForm">
       <input type="text" id="username" placeholder="Username" required />
@@ -69,7 +82,10 @@
       try {
         const res = await fetch('/api/login', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({ username, password })
         });
         
@@ -82,6 +98,7 @@
           errorDiv.textContent = data.error || 'Login failed';
         }
       } catch (error) {
+        console.error('Login error:', error);
         errorDiv.textContent = 'An error occurred. Please try again.';
       }
     });
