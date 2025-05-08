@@ -15,4 +15,12 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
-    url: https://femme-boss-social-scheduler.onrender.com 
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: femme-boss-redis
+    url: https://femme-boss-social-scheduler.onrender.com
+
+  - type: redis
+    name: femme-boss-redis
+    plan: free 
