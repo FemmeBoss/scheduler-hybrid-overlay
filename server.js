@@ -14,27 +14,47 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Initialize Redis client
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-  socket: {
-    reconnectStrategy: (retries) => {
-      if (retries > 10) {
-        console.error('Redis max retries reached');
-        return new Error('Redis max retries reached');
+let redisClient;
+let sessionStore;
+
+try {
+  redisClient = createClient({
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    socket: {
+      reconnectStrategy: (retries) => {
+        if (retries > 10) {
+          console.error('Redis max retries reached');
+          return new Error('Redis max retries reached');
+        }
+        return Math.min(retries * 100, 3000);
       }
-      return Math.min(retries * 100, 3000);
     }
-  }
-});
+  });
 
-// Connect to Redis
-redisClient.connect().catch(err => {
-  console.error('Failed to connect to Redis:', err);
-  // Don't exit, try to continue without Redis
-});
+  // Connect to Redis
+  redisClient.connect().then(() => {
+    console.log('Redis connected successfully');
+    sessionStore = new RedisStore({ 
+      client: redisClient,
+      prefix: 'sess:',
+      ttl: 86400 // 24 hours in seconds
+    });
+  }).catch(err => {
+    console.error('Failed to connect to Redis:', err);
+    console.log('Falling back to MemoryStore');
+    sessionStore = new session.MemoryStore();
+  });
 
-redisClient.on('error', (err) => console.error('Redis Client Error:', err));
-redisClient.on('connect', () => console.log('Redis Client Connected'));
+  redisClient.on('error', (err) => {
+    console.error('Redis Client Error:', err);
+    console.log('Falling back to MemoryStore');
+    sessionStore = new session.MemoryStore();
+  });
+} catch (err) {
+  console.error('Error initializing Redis:', err);
+  console.log('Using MemoryStore');
+  sessionStore = new session.MemoryStore();
+}
 
 // Log environment variables at startup
 console.log('Environment check:', {
@@ -83,11 +103,7 @@ app.use((req, res, next) => {
 
 // Session configuration
 app.use(session({
-  store: new RedisStore({ 
-    client: redisClient,
-    prefix: 'sess:',
-    ttl: 86400 // 24 hours in seconds
-  }),
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
   resave: false,
   saveUninitialized: false,
