@@ -15,8 +15,20 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Redis client
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  socket: {
+    reconnectStrategy: (retries) => {
+      if (retries > 10) {
+        console.error('Redis max retries reached');
+        return new Error('Redis max retries reached');
+      }
+      return Math.min(retries * 100, 3000);
+    }
+  }
 });
+
+// Connect to Redis
+await redisClient.connect().catch(console.error);
 
 redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 redisClient.on('connect', () => console.log('Redis Client Connected'));
@@ -49,7 +61,11 @@ app.use((req, res, next) => {
 
 // Session configuration
 app.use(session({
-  store: new RedisStore({ client: redisClient }),
+  store: new RedisStore({ 
+    client: redisClient,
+    prefix: 'sess:',
+    ttl: 86400 // 24 hours in seconds
+  }),
   secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
   resave: false,
   saveUninitialized: false,
