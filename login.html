@@ -145,7 +145,10 @@
         
         if (response.ok) {
           console.log('Login successful, redirecting...');
-          window.location.href = '/';
+          // Add a small delay to ensure session is saved
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 100);
         } else {
           console.error('Login failed:', data);
           errorDiv.textContent = data.error || `Login failed (${response.status})`;

@@ -28,7 +28,10 @@ const redisClient = createClient({
 });
 
 // Connect to Redis
-await redisClient.connect().catch(console.error);
+redisClient.connect().catch(err => {
+  console.error('Failed to connect to Redis:', err);
+  // Don't exit, try to continue without Redis
+});
 
 redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 redisClient.on('connect', () => console.log('Redis Client Connected'));
@@ -46,6 +49,12 @@ console.log('Environment check:', {
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 // CORS middleware
 app.use((req, res, next) => {
