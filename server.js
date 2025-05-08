@@ -14,7 +14,6 @@ const __dirname = path.dirname(__filename);
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
 
 // CORS middleware
 app.use((req, res, next) => {
@@ -116,6 +115,9 @@ app.get('/api/facebook-pages', requireAuth, async (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
+
+// Serve static files after API routes
+app.use(express.static(__dirname));
 
 // Start the server
 app.listen(port, () => {
