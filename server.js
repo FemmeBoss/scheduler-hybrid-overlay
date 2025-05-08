@@ -36,6 +36,12 @@ try {
   } else {
     secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
   }
+  // Log loaded secrets (without showing actual values)
+  console.log('Secrets loaded:', {
+    username: secrets.username ? 'set' : 'not set',
+    password: secrets.password ? 'set' : 'not set',
+    permanentToken: secrets.permanentToken ? 'set' : 'not set'
+  });
 } catch (error) {
   console.error('Error loading secrets:', error);
   process.exit(1);
@@ -43,13 +49,27 @@ try {
 
 // Login route
 app.post('/api/login', (req, res) => {
+  console.log('Login attempt:', {
+    receivedUsername: req.body.username ? 'provided' : 'not provided',
+    receivedPassword: req.body.password ? 'provided' : 'not provided',
+    expectedUsername: secrets.username ? 'set' : 'not set',
+    expectedPassword: secrets.password ? 'set' : 'not set'
+  });
+  
   const { username, password } = req.body;
   
+  if (!username || !password) {
+    console.log('Login failed: Missing credentials');
+    return res.status(401).json({ error: 'Username and password are required' });
+  }
+  
   if (username === secrets.username && password === secrets.password) {
+    console.log('Login successful for user:', username);
     req.session.authenticated = true;
     req.session.token = secrets.permanentToken;
     res.json({ success: true });
   } else {
+    console.log('Login failed: Invalid credentials');
     res.status(401).json({ error: 'Invalid credentials' });
   }
 });
@@ -87,4 +107,5 @@ app.get('/health', (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`🌐 Server running on port ${port}`);
+  console.log('Environment:', process.env.NODE_ENV || 'development');
 });
