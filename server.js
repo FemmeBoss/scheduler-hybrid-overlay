@@ -61,11 +61,10 @@ try {
 
 // API Routes
 app.post('/api/login', (req, res) => {
-  console.log('Login attempt:', {
-    receivedUsername: req.body.username ? 'provided' : 'not provided',
-    receivedPassword: req.body.password ? 'provided' : 'not provided',
-    expectedUsername: secrets.username ? 'set' : 'not set',
-    expectedPassword: secrets.password ? 'set' : 'not set'
+  console.log('Login attempt received:', {
+    body: req.body,
+    headers: req.headers,
+    session: req.session
   });
   
   const { username, password } = req.body;
@@ -74,6 +73,13 @@ app.post('/api/login', (req, res) => {
     console.log('Login failed: Missing credentials');
     return res.status(401).json({ error: 'Username and password are required' });
   }
+  
+  console.log('Comparing credentials:', {
+    receivedUsername: username,
+    receivedPassword: password ? '****' : undefined,
+    expectedUsername: secrets.username,
+    expectedPassword: secrets.password ? '****' : undefined
+  });
   
   if (username === secrets.username && password === secrets.password) {
     console.log('Login successful for user:', username);
