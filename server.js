@@ -105,13 +105,14 @@ app.use((req, res, next) => {
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    httpOnly: true
+    httpOnly: true,
+    path: '/'
   }
 }));
 
@@ -120,7 +121,8 @@ app.use((req, res, next) => {
   console.log('Session state:', {
     id: req.session.id,
     authenticated: req.session.authenticated,
-    hasToken: !!req.session.token
+    hasToken: !!req.session.token,
+    cookie: req.session.cookie
   });
   next();
 });
@@ -156,7 +158,8 @@ app.post('/api/login', async (req, res) => {
   console.log('Session before:', {
     id: req.session.id,
     authenticated: req.session.authenticated,
-    hasToken: !!req.session.token
+    hasToken: !!req.session.token,
+    cookie: req.session.cookie
   });
   
   const { username, password } = req.body;
@@ -194,7 +197,17 @@ app.post('/api/login', async (req, res) => {
       console.log('Session after save:', {
         id: req.session.id,
         authenticated: req.session.authenticated,
-        hasToken: !!req.session.token
+        hasToken: !!req.session.token,
+        cookie: req.session.cookie
+      });
+      
+      // Set cookie explicitly
+      res.cookie('connect.sid', req.session.id, {
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/'
       });
       
       res.json({ success: true });
