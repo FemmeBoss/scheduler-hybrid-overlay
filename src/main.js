@@ -38,6 +38,8 @@ import { checkAuth, getToken } from './core/auth.js';
 import { collection, getDocs, doc, deleteDoc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getWatermark, saveWatermark, openDatabase } from './core/idb.js';
 
+import { fetchAllPages } from './core/graphApi.js';
+
 // Initialize scheduledPosts array
 let scheduledPosts = [];
 
