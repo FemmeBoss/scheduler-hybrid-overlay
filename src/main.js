@@ -193,9 +193,14 @@ function openEditModal(postId) {
   const timeInput = document.getElementById('editScheduledTime');
 
   captionInput.value = post.caption;
-  // Convert ISO string to local datetime-local format
-  const scheduledDate = new Date(post.scheduledTime || post.scheduleDate);
-  timeInput.value = formatDateTimeForInput(scheduledDate);
+  // Only set the time input if the post has a scheduled time
+  if (post.scheduledTime || post.scheduleDate) {
+    const scheduledDate = new Date(post.scheduledTime || post.scheduleDate);
+    timeInput.value = formatDateTimeForInput(scheduledDate);
+  } else {
+    // Do not set the time input to now; leave it unchanged
+    timeInput.value = '';
+  }
 
   showModal('editModal');
 }
@@ -837,3 +842,5 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.error('[ERROR] Failed to load pages:', err);
   }
 });
+
+window.openWatermarkModal = openWatermarkModal;
