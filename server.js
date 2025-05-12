@@ -199,19 +199,18 @@ app.post('/api/login', async (req, res) => {
   
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
     console.log('Login successful for user:', username);
-    
+    // Debug log for Facebook token
+    console.log('FACEBOOK_PERMANENT_TOKEN at login:', process.env.FACEBOOK_PERMANENT_TOKEN);
     // Set session data
     req.session.authenticated = true;
-    req.session.token = process.env.FACEBOOK_PERMANENT_TOKEN;
+    req.session.token = process.env.FACEBOOK_PERMANENT_TOKEN; // Store the real token
     req.session.hasToken = true;
-    
     // Save session explicitly
     req.session.save((err) => {
       if (err) {
         console.error('Error saving session:', err);
         return res.status(500).json({ error: 'Failed to save session' });
       }
-      
       console.log('Session saved successfully');
       if (req.session) {
         console.log('Session after save:', {
@@ -222,7 +221,6 @@ app.post('/api/login', async (req, res) => {
           headers: req.headers.cookie
         });
       }
-      
       res.json({ success: true });
     });
   } else {
