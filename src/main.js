@@ -745,18 +745,34 @@ async function displayDefaultTimesInSidebar() {
     const profileId = checkbox?.dataset.id;
     if (!profileId) continue;
     // Remove any previous default time display
-    const old = profile.querySelector('.default-time-display');
+    const old = profile.querySelector('.default-time-badge');
     if (old) old.remove();
     try {
       const snap = await getDoc(doc(db, 'default_times', profileId));
+      const badge = document.createElement('span');
+      badge.className = 'default-time-badge';
+      badge.style.fontSize = '12px';
+      badge.style.color = '#888';
+      badge.style.marginLeft = '6px';
+      badge.style.verticalAlign = 'middle';
+      badge.style.background = '#f3f3f3';
+      badge.style.borderRadius = '8px';
+      badge.style.padding = '2px 6px';
+      badge.style.display = 'inline-block';
       if (snap.exists() && snap.data().time) {
-        const div = document.createElement('div');
-        div.className = 'default-time-display';
-        div.style.fontSize = '12px';
-        div.style.color = '#888';
-        div.style.marginLeft = '8px';
-        div.textContent = `⏰ Default: ${snap.data().time}`;
-        profile.querySelector('.profile-info')?.appendChild(div);
+        badge.textContent = `⏰ ${snap.data().time}`;
+      } else {
+        badge.textContent = 'No default time';
+        badge.style.color = '#bbb';
+        badge.style.background = 'transparent';
+        badge.style.padding = '2px 0';
+      }
+      // Insert after the page name (label)
+      const label = profile.querySelector('label');
+      if (label) {
+        label.appendChild(badge);
+      } else {
+        profile.querySelector('.profile-info')?.appendChild(badge);
       }
     } catch (err) {
       // Ignore errors
