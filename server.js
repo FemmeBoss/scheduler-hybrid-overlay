@@ -56,6 +56,21 @@ console.log('Environment check:', {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Session configuration - MUST be before any middleware that uses session
+app.use(session({
+  store: sessionStore,
+  secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax',
+    path: '/'
+  }
+}));
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -64,7 +79,6 @@ app.use((req, res, next) => {
 
 // CORS middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   console.log('Request origin:', req.headers.origin || '*');
   
   // Set CORS headers based on origin
@@ -91,41 +105,16 @@ app.use((req, res, next) => {
   });
 
   // Log session state
-  console.log('Session state:', {
-    id: req.sessionID,
-    authenticated: req.session.authenticated,
-    hasToken: !!req.session.token,
-    cookie: req.session.cookie,
-    headers: req.headers.cookie
-  });
-
-  next();
-});
-
-// Session configuration
-app.use(session({
-  store: sessionStore,
-  secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
-  resave: true,
-  saveUninitialized: true,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax',
-    path: '/'
+  if (req.session) {
+    console.log('Session state:', {
+      id: req.sessionID,
+      authenticated: req.session.authenticated,
+      hasToken: !!req.session.token,
+      cookie: req.session.cookie,
+      headers: req.headers.cookie
+    });
   }
-}));
 
-// Add session debugging middleware
-app.use((req, res, next) => {
-  console.log('Session state:', {
-    id: req.session.id,
-    authenticated: req.session.authenticated,
-    hasToken: !!req.session.token,
-    cookie: req.session.cookie,
-    headers: req.headers.cookie // Log the cookie header
-  });
   next();
 });
 
@@ -157,13 +146,16 @@ app.post('/api/login', async (req, res) => {
   console.log('=== Login Request Received ===');
   console.log('Headers:', req.headers);
   console.log('Body:', { ...req.body, password: '****' });
-  console.log('Session before:', {
-    id: req.sessionID,
-    authenticated: req.session.authenticated,
-    hasToken: !!req.session.token,
-    cookie: req.session.cookie,
-    headers: req.headers.cookie
-  });
+  
+  if (req.session) {
+    console.log('Session before:', {
+      id: req.sessionID,
+      authenticated: req.session.authenticated,
+      hasToken: !!req.session.token,
+      cookie: req.session.cookie,
+      headers: req.headers.cookie
+    });
+  }
   
   const { username, password } = req.body;
   
@@ -194,13 +186,15 @@ app.post('/api/login', async (req, res) => {
       }
       
       console.log('Session saved successfully');
-      console.log('Session after save:', {
-        id: req.sessionID,
-        authenticated: req.session.authenticated,
-        hasToken: !!req.session.token,
-        cookie: req.session.cookie,
-        headers: req.headers.cookie
-      });
+      if (req.session) {
+        console.log('Session after save:', {
+          id: req.sessionID,
+          authenticated: req.session.authenticated,
+          hasToken: !!req.session.token,
+          cookie: req.session.cookie,
+          headers: req.headers.cookie
+        });
+      }
       
       res.json({ success: true });
     });
@@ -212,8 +206,13 @@ app.post('/api/login', async (req, res) => {
 
 // Check authentication middleware
 const requireAuth = (req, res, next) => {
+  if (!req.session) {
+    console.log('No session found');
+    return res.redirect('/login.html');
+  }
+
   console.log('Auth check:', {
-    sessionId: req.session.id,
+    sessionId: req.sessionID,
     authenticated: req.session.authenticated,
     hasToken: !!req.session.token,
     path: req.path
@@ -250,6 +249,10 @@ app.get('/health', (req, res) => {
 
 // Check authentication status
 app.get('/api/check-auth', (req, res) => {
+  if (!req.session) {
+    return res.json({ authenticated: false, token: null });
+  }
+  
   res.json({
     authenticated: req.session.authenticated || false,
     token: req.session.token || null
