@@ -19,7 +19,7 @@ let sessionStore;
 
 // Redis connection configuration
 const redisConfig = {
-  url: process.env.REDIS_URL,
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
   socket: {
     reconnectStrategy: (retries) => {
       console.log(`Redis connection attempt ${retries}`);
@@ -36,7 +36,7 @@ const redisConfig = {
 const connectToRedis = async () => {
   try {
     if (!process.env.REDIS_URL) {
-      throw new Error('REDIS_URL not set');
+      console.warn('REDIS_URL not set - using default localhost URL');
     }
 
     redisClient = createClient(redisConfig);
@@ -80,11 +80,13 @@ const initializeSessionStore = async () => {
     console.log('Using RedisStore for sessions');
   } else {
     if (process.env.NODE_ENV === 'production') {
-      console.error('Redis connection failed in production environment');
-      process.exit(1);
+      console.warn('Redis connection failed in production environment - using MemoryStore temporarily');
+      console.warn('Please set REDIS_URL environment variable for production use');
+      sessionStore = new session.MemoryStore();
+    } else {
+      console.log('Using MemoryStore (development mode)');
+      sessionStore = new session.MemoryStore();
     }
-    console.log('Falling back to MemoryStore (development only)');
-    sessionStore = new session.MemoryStore();
   }
 };
 
