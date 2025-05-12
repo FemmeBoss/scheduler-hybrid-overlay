@@ -170,6 +170,11 @@ async function renderPages(pages, containerId, platform) {
   });
 
   console.log(`[RENDERED] ${pages.length} ${platform} pages ✅`);
+
+  // Inject clock icons for default time after rendering pages
+  if (window.injectSetDefaultTimeButtons) {
+    window.injectSetDefaultTimeButtons();
+  }
 }
 
 // --- Time Modal Management ---
