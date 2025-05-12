@@ -107,6 +107,9 @@ console.log('Environment check:', {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ⭐ Trust Render/Cloudflare proxy for secure cookies
+app.set('trust proxy', 1);
+
 // Session configuration - MUST be before any middleware that uses session
 app.use(session({
   store: sessionStore,
