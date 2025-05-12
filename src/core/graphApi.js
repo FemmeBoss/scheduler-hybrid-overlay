@@ -260,3 +260,14 @@ function showNotification(message, type = 'info') {
   document.body.appendChild(notification);
   setTimeout(() => notification.remove(), 3000);
 }
+
+export async function loadPages() {
+  const res = await fetch('/api/pages', {
+    credentials: 'include'
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load pages: ${res.statusText}`);
+  }
+  const json = await res.json();
+  return json.pages || [];
+}

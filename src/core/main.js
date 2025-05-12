@@ -1,3 +1,5 @@
+import { fetchAllPages } from './core/graphApi.js';
+
 // Add event listener for pages ready
 window.addEventListener('fb-pages-ready', (e) => {
   console.log("[DEBUG] Pages ready event received");
@@ -31,5 +33,20 @@ window.addEventListener('fb-pages-ready', (e) => {
         pagesContainer.appendChild(pageElement);
       });
     }
+  }
+});
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const isAuthenticated = await checkAuth();
+  if (!isAuthenticated) return;
+
+  try {
+    const pages = await fetchAllPages();
+    const event = new CustomEvent('fb-pages-ready', {
+      detail: pages
+    });
+    window.dispatchEvent(event);
+  } catch (err) {
+    console.error('[ERROR] Failed to load pages:', err);
   }
 }); 
