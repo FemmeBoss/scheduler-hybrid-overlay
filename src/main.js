@@ -340,7 +340,8 @@ document.getElementById('saveEdit').addEventListener('click', async () => {
   if (!currentEditPostId) return;
 
   const caption = document.getElementById('editCaption').value;
-  const scheduledTime = document.getElementById('editScheduledTime').value;
+  const scheduledTimeLocal = document.getElementById('editScheduledTime').value; // e.g. '2025-05-12T14:42'
+  const scheduledTime = new Date(scheduledTimeLocal); // This is local time
 
   try {
     const postRef = doc(db, 'scheduledPosts', currentEditPostId);
@@ -377,8 +378,8 @@ document.getElementById('saveEdit').addEventListener('click', async () => {
     // Update the post in Firestore with new status
     await updateDoc(postRef, {
       caption,
-      scheduleDate: new Date(scheduledTime).toISOString(),
-      scheduledTime: new Date(scheduledTime).toISOString(),
+      scheduleDate: scheduledTime.toISOString(),
+      scheduledTime: scheduledTime.toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'edited',
       originalPostId: post.postId, // Store the original post ID
@@ -391,8 +392,8 @@ document.getElementById('saveEdit').addEventListener('click', async () => {
       scheduledPosts[postIndex] = {
         ...scheduledPosts[postIndex],
         caption,
-        scheduleDate: new Date(scheduledTime).toISOString(),
-        scheduledTime: new Date(scheduledTime).toISOString(),
+        scheduleDate: scheduledTime.toISOString(),
+        scheduledTime: scheduledTime.toISOString(),
         updatedAt: new Date().toISOString(),
         status: 'edited',
         originalPostId: post.postId,
@@ -464,7 +465,9 @@ document.getElementById('confirmDelete').addEventListener('click', async () => {
 
 // Helper function to format date for datetime-local input
 function formatDateTimeForInput(date) {
-  return new Date(date).toISOString().slice(0, 16);
+  // Format as YYYY-MM-DDTHH:mm in local time
+  const pad = n => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 // Update the renderScheduledPosts function
