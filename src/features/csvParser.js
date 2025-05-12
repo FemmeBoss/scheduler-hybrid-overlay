@@ -15,3 +15,5 @@ export async function parseCsv(file) {
     scheduleDate: r['Schedule Date'] || r.scheduleDate || ''
   }));
 }
+
+window.parseCsv = parseCsv;
