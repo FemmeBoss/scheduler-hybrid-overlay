@@ -872,3 +872,44 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.openWatermarkModal = openWatermarkModal;
+
+// CSV Builder Functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const imageInput = document.getElementById('imageInput');
+  const captionsTextarea = document.getElementById('captions');
+  const datesTextarea = document.getElementById('dates');
+
+  if (imageInput && captionsTextarea && datesTextarea) {
+    imageInput.addEventListener('change', handleImageUpload);
+    captionsTextarea.addEventListener('input', validateInputs);
+    datesTextarea.addEventListener('input', validateInputs);
+  }
+});
+
+function handleImageUpload(event) {
+  const files = event.target.files;
+  if (files.length > 20) {
+    showNotification('Maximum 20 images allowed', 'error');
+    event.target.value = '';
+    return;
+  }
+  validateInputs();
+}
+
+function validateInputs() {
+  const imageInput = document.getElementById('imageInput');
+  const captions = document.getElementById('captions').value.split('\n').filter(line => line.trim());
+  const dates = document.getElementById('dates').value.split('\n').filter(line => line.trim());
+
+  const imageCount = imageInput.files.length;
+  const captionCount = captions.length;
+  const dateCount = dates.length;
+
+  if (imageCount > 0 && captionCount > 0 && dateCount > 0) {
+    if (imageCount !== captionCount || imageCount !== dateCount) {
+      showNotification('Number of images, captions, and dates must match', 'error');
+    } else {
+      showNotification('All inputs are valid', 'success');
+    }
+  }
+}

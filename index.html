@@ -36,6 +36,24 @@
     <div id="content">
       <h1 class="fancy-title">Femme Boss Scheduler</h1>
 
+      <!-- CSV Builder Section -->
+      <div class="csv-builder-section" style="display: flex; gap: 1rem; margin-bottom: 2rem; width: 100%;">
+        <div class="form-section" style="flex: 1;">
+          <label for="imageInput"><strong>Upload Images (1-20):</strong></label>
+          <input type="file" id="imageInput" accept="image/*" multiple>
+        </div>
+
+        <div class="form-section" style="flex: 1;">
+          <label for="captions"><strong>Captions (one per line):</strong></label>
+          <textarea id="captions" rows="6" placeholder="One caption per line..."></textarea>
+        </div>
+
+        <div class="form-section" style="flex: 1;">
+          <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label>
+          <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-05-01T15:00"></textarea>
+        </div>
+      </div>
+
       <!-- Login Section -->
       <div id="loginSection" style="display: none;">
         <p>Please log in to access the scheduler.</p>
