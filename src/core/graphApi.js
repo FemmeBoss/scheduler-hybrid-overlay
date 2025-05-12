@@ -75,6 +75,10 @@ async function fetchAllPages(token) {
 
   renderPages(uniquePages, 'facebookPages', 'facebook');
   renderPages(igPages, 'instagramPages', 'instagram');
+
+  const allLoadedPages = [...uniquePages, ...igPages];
+  window.dispatchEvent(new CustomEvent('fb-pages-ready', { detail: allLoadedPages }));
+  return allLoadedPages;
 }
 
 async function renderPages(pages, containerId, platform) {
