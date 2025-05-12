@@ -33,6 +33,7 @@ import './enhancements/retryHelper.js';
 
 // --- RESTORE SESSION ---
 import { restorePageSelections } from './enhancements/sessionStorageHandler.js';
+import { checkAuth } from './core/auth.js';
 
 import { collection, getDocs, doc, deleteDoc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -58,61 +59,78 @@ function showNotification(message, type = 'info') {
 }
 
 // --- INIT ---
-window.addEventListener('DOMContentLoaded', () => {
-  restorePageSelections();
-  injectManageWatermarkButtons();
-  updateScheduleButton();
+window.addEventListener('DOMContentLoaded', async () => {
+  console.log('[DEBUG] Checking authentication before initializing...');
+  const isAuthenticated = await checkAuth();
+  
+  if (!isAuthenticated) {
+    console.log('[DEBUG] User not authenticated, skipping initialization');
+    return;
+  }
+  
+  console.log('[DEBUG] User authenticated, initializing page...');
+  
+  try {
+    restorePageSelections();
+    injectManageWatermarkButtons();
+    updateScheduleButton();
 
-  const csvInput = document.getElementById('postCsv');
-  const status = document.getElementById('csvUploadStatus');
-  const text = document.getElementById('csvUploadText');
+    const csvInput = document.getElementById('postCsv');
+    const status = document.getElementById('csvUploadStatus');
+    const text = document.getElementById('csvUploadText');
 
-  if (csvInput && status && text) {
-    csvInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        text.textContent = `CSV uploaded: ${e.target.files[0].name}`;
-        status.style.opacity = '1';
-      } else {
-        text.textContent = '';
-        status.style.opacity = '0';
+    if (csvInput && status && text) {
+      csvInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          text.textContent = `CSV uploaded: ${e.target.files[0].name}`;
+          status.style.opacity = '1';
+        } else {
+          text.textContent = '';
+          status.style.opacity = '0';
+        }
+      });
+    }
+
+    // Sidebar Toggle Functionality
+    const sidebars = document.querySelectorAll('.sidebar');
+    const mainContainer = document.getElementById('mainContainer');
+
+    sidebars.forEach(sidebar => {
+      const toggle = sidebar.querySelector('.sidebar-toggle');
+      
+      toggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        
+        // Check if both sidebars are collapsed
+        const allCollapsed = Array.from(sidebars).every(s => s.classList.contains('collapsed'));
+        mainContainer.classList.toggle('sidebar-collapsed', allCollapsed);
+        
+        // Save state to localStorage
+        const sidebarId = sidebar.id;
+        localStorage.setItem(`${sidebarId}-collapsed`, sidebar.classList.contains('collapsed'));
+      });
+    });
+
+    // Restore sidebar states from localStorage
+    sidebars.forEach(sidebar => {
+      const sidebarId = sidebar.id;
+      const isCollapsed = localStorage.getItem(`${sidebarId}-collapsed`) === 'true';
+      if (isCollapsed) {
+        sidebar.classList.add('collapsed');
       }
     });
-  }
 
-  // Sidebar Toggle Functionality
-  const sidebars = document.querySelectorAll('.sidebar');
-  const mainContainer = document.getElementById('mainContainer');
+    // Check initial state for mainContainer
+    const allCollapsed = Array.from(sidebars).every(s => s.classList.contains('collapsed'));
+    mainContainer.classList.toggle('sidebar-collapsed', allCollapsed);
 
-  sidebars.forEach(sidebar => {
-    const toggle = sidebar.querySelector('.sidebar-toggle');
+    initializePageSelections();
     
-    toggle.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      
-      // Check if both sidebars are collapsed
-      const allCollapsed = Array.from(sidebars).every(s => s.classList.contains('collapsed'));
-      mainContainer.classList.toggle('sidebar-collapsed', allCollapsed);
-      
-      // Save state to localStorage
-      const sidebarId = sidebar.id;
-      localStorage.setItem(`${sidebarId}-collapsed`, sidebar.classList.contains('collapsed'));
-    });
-  });
-
-  // Restore sidebar states from localStorage
-  sidebars.forEach(sidebar => {
-    const sidebarId = sidebar.id;
-    const isCollapsed = localStorage.getItem(`${sidebarId}-collapsed`) === 'true';
-    if (isCollapsed) {
-      sidebar.classList.add('collapsed');
-    }
-  });
-
-  // Check initial state for mainContainer
-  const allCollapsed = Array.from(sidebars).every(s => s.classList.contains('collapsed'));
-  mainContainer.classList.toggle('sidebar-collapsed', allCollapsed);
-
-  initializePageSelections();
+    console.log('[DEBUG] Page initialization complete');
+  } catch (error) {
+    console.error('[DEBUG] Error during initialization:', error);
+    showNotification('Error initializing page: ' + error.message, 'error');
+  }
 });
 
 // --- WATERMARK MANAGER ---
