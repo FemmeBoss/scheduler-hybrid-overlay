@@ -770,12 +770,9 @@ window.previewPosts = async function() {
         const snap = await getDoc(doc(db, 'default_times', pageId));
         console.log(`[DEBUG] Firestore default_times for page ${pageId}:`, snap.exists() ? snap.data() : null);
         if (snap.exists() && snap.data().time) {
-          const now = new Date();
           const [hh, mm] = snap.data().time.split(':');
-          now.setHours(Number(hh), Number(mm), 0, 0);
-          const iso = now.toISOString().slice(0, 16);
-          console.log(`[DEBUG] Using default time for page ${pageId}:`, iso);
-          return iso;
+          console.log(`[DEBUG] Using default time for page ${pageId}: ${hh}:${mm}`);
+          return { hh: Number(hh), mm: Number(mm) };
         } else {
           showNotification(`No default time set for page: ${page.dataset.name}`, 'warning');
         }
@@ -783,7 +780,7 @@ window.previewPosts = async function() {
         console.error(`[DEBUG] Error fetching default time for page ${pageId}:`, err);
         showNotification(`Error fetching default time for page: ${page.dataset.name}`, 'warning');
       }
-      return '';
+      return null;
     }));
 
     // For each selected page, create a preview for each post/image
@@ -816,8 +813,17 @@ window.previewPosts = async function() {
       // For each post/image, create a preview card with the default time
       for (let j = 0; j < posts.length; j++) {
         const post = posts[j];
-        let scheduleDate = defaultTimes[i] || '';
-        if (post.scheduleDate) scheduleDate = post.scheduleDate;
+        let scheduleDate = post.scheduleDate;
+        
+        // If no schedule date in CSV, use default time
+        if (!scheduleDate && defaultTimes[i]) {
+          const now = new Date();
+          const { hh, mm } = defaultTimes[i];
+          now.setHours(hh, mm, 0, 0);
+          scheduleDate = now.toISOString().slice(0, 16);
+          console.log(`[DEBUG] Applied default time ${hh}:${mm} to post ${j} for page ${pageData.id}`);
+        }
+        
         console.log(`[DEBUG] Preview card for page ${pageData.id}, post ${j}: scheduleDate=${scheduleDate}`);
         const previewCard = await window.renderPreviewCard(pageData, { ...post, scheduleDate }, hasWatermark);
         if (previewCard) {
@@ -940,3 +946,19 @@ window.addEventListener('DOMContentLoaded', injectSetDefaultTimeButtons);
 window.addEventListener('fb-pages-ready', injectSetDefaultTimeButtons);
 
 window.injectSetDefaultTimeButtons = injectSetDefaultTimeButtons;
+
+// Add event listener for saving default times
+window.addEventListener('save-time-settings', async (event) => {
+  const { pageId, selectedDays, selectedTime } = event.detail;
+  console.log('[DEBUG] Saving time settings:', { pageId, selectedDays, selectedTime });
+  
+  try {
+    await saveDefaultTimes(pageId, selectedDays, selectedTime);
+    // Close the modal
+    const modal = document.getElementById('timeModal');
+    if (modal) modal.style.display = 'none';
+  } catch (error) {
+    console.error('Error saving time settings:', error);
+    showNotification('Failed to save time settings', 'error');
+  }
+});
