@@ -92,16 +92,19 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     if (csvInput && status && text) {
       csvInput.addEventListener('change', async (e) => {
+        console.log('[DEBUG] CSV input change event fired');
         if (e.target.files.length > 0) {
           const file = e.target.files[0];
+          console.log('[DEBUG] CSV file selected:', file.name);
           text.textContent = `CSV uploaded: ${file.name}`;
           status.style.opacity = '1';
-          // Try to parse the CSV and count posts
           try {
             const posts = await parseCsv(file);
+            console.log('[DEBUG] Parsed posts from CSV:', posts);
             showNotification(`CSV file uploaded: ${file.name} (${posts.length} posts detected)`, 'success');
             text.textContent += ` (${posts.length} posts)`;
           } catch (err) {
+            console.error('[DEBUG] Error parsing CSV file:', err);
             showNotification('Error parsing CSV file', 'error');
             text.textContent += ' (Error reading file)';
           }
@@ -744,12 +747,14 @@ window.previewPosts = async function() {
 
   try {
     const posts = await parseCsv(postFile);
+    console.log('[DEBUG] Posts parsed for preview:', posts);
     if (!posts.length) {
       container.innerHTML = '<p>No posts found in CSV file.</p>';
       return;
     }
 
     const selectedPages = Array.from(document.querySelectorAll('.page-checkbox:checked'));
+    console.log('[DEBUG] Selected pages for preview:', selectedPages.map(p => p.dataset));
     if (!selectedPages.length) {
       showNotification('Please select at least one page', 'warning');
       return;
@@ -763,16 +768,19 @@ window.previewPosts = async function() {
       const pageId = page.dataset.id;
       try {
         const snap = await getDoc(doc(db, 'default_times', pageId));
+        console.log(`[DEBUG] Firestore default_times for page ${pageId}:`, snap.exists() ? snap.data() : null);
         if (snap.exists() && snap.data().time) {
-          // Use today's date with the default time (HH:mm)
           const now = new Date();
           const [hh, mm] = snap.data().time.split(':');
           now.setHours(Number(hh), Number(mm), 0, 0);
-          return now.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+          const iso = now.toISOString().slice(0, 16);
+          console.log(`[DEBUG] Using default time for page ${pageId}:`, iso);
+          return iso;
         } else {
           showNotification(`No default time set for page: ${page.dataset.name}`, 'warning');
         }
       } catch (err) {
+        console.error(`[DEBUG] Error fetching default time for page ${pageId}:`, err);
         showNotification(`Error fetching default time for page: ${page.dataset.name}`, 'warning');
       }
       return '';
@@ -788,6 +796,7 @@ window.previewPosts = async function() {
         picture: { data: { url: page.dataset.picture } },
         pageAccessToken: page.dataset.accessToken
       };
+      console.log('[DEBUG] Rendering preview for page:', pageData);
 
       if (!pageData.id || pageData.id === '0' || !pageData.pageAccessToken) {
         console.warn(`[WARNING] Invalid page data:`, pageData);
@@ -807,17 +816,15 @@ window.previewPosts = async function() {
       // For each post/image, create a preview card with the default time
       for (let j = 0; j < posts.length; j++) {
         const post = posts[j];
-        // Use the default time for this page, or blank if not set
         let scheduleDate = defaultTimes[i] || '';
-        // If the post has a date, prefer that
         if (post.scheduleDate) scheduleDate = post.scheduleDate;
+        console.log(`[DEBUG] Preview card for page ${pageData.id}, post ${j}: scheduleDate=${scheduleDate}`);
         const previewCard = await window.renderPreviewCard(pageData, { ...post, scheduleDate }, hasWatermark);
         if (previewCard) {
           container.appendChild(previewCard);
         }
       }
     }
-    // Update schedule button state after previews are loaded
     updateScheduleButton();
   } catch (err) {
     console.error("Failed to load preview posts:", err);
