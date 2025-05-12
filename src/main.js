@@ -33,7 +33,7 @@ import './enhancements/retryHelper.js';
 
 // --- RESTORE SESSION ---
 import { restorePageSelections } from './enhancements/sessionStorageHandler.js';
-import { checkAuth } from './core/auth.js';
+import { checkAuth, getToken } from './core/auth.js';
 
 import { collection, getDocs, doc, deleteDoc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -71,7 +71,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.log('[DEBUG] User authenticated, initializing page...');
   
   try {
-    const pages = await fetchAllPages();
+    const token = await getToken();
+    if (!token) {
+      console.error('[ERROR] No Facebook access token found.');
+      return;
+    }
+    const pages = await fetchAllPages(token);
     window.dispatchEvent(new CustomEvent('fb-pages-ready', { detail: pages }));
 
     restorePageSelections();
