@@ -298,3 +298,5 @@ export async function loadPages() {
     return [];
   }
 }
+
+window.saveDefaultTimes = saveDefaultTimes;
