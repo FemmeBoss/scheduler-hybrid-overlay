@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import session from 'express-session';
 import RedisStore from 'connect-redis';
-import { createClient } from 'redis';
+import redisClient, { connectRedis } from './redisClient.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
@@ -16,7 +16,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Initialize Redis client
-let redisClient;
 let sessionStore;
 
 const allowedOrigin = 'https://femme-boss-social-scheduler.onrender.com';
@@ -36,66 +35,13 @@ const redisConfig = {
   }
 };
 
-// Connect to Redis with retry logic
-const connectToRedis = async () => {
-  try {
-    if (!process.env.REDIS_URL) {
-      console.warn('REDIS_URL not set - using default localhost URL');
-    }
-
-    redisClient = createClient(redisConfig);
-    
-    redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err);
-    });
-
-    redisClient.on('connect', () => {
-      console.log('Redis Client Connected');
-    });
-
-    redisClient.on('reconnecting', () => {
-      console.log('Redis Client Reconnecting');
-    });
-
-    await redisClient.connect();
-    console.log('Connected to Redis successfully');
-    
-    // Test Redis connection
-    await redisClient.ping();
-    console.log('Redis ping successful');
-    
-    return true;
-  } catch (err) {
-    console.error('Failed to connect to Redis:', err);
-    return false;
-  }
-};
-
 // Initialize session store
-const initializeSessionStore = async () => {
-  const redisConnected = await connectToRedis();
-  
-  if (redisConnected) {
-    sessionStore = new RedisStore({ 
-      client: redisClient,
-      prefix: 'sess:',
-      ttl: 86400 // 24 hours in seconds
-    });
-    console.log('Using RedisStore for sessions');
-  } else {
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('Redis connection failed in production environment - using MemoryStore temporarily');
-      console.warn('Please set REDIS_URL environment variable for production use');
-      sessionStore = new session.MemoryStore();
-    } else {
-      console.log('Using MemoryStore (development mode)');
-      sessionStore = new session.MemoryStore();
-    }
-  }
-};
-
-// Initialize session store before starting server
-await initializeSessionStore();
+await connectRedis();
+sessionStore = new RedisStore({ 
+  client: redisClient,
+  prefix: 'sess:',
+  ttl: 86400 // 24 hours in seconds
+});
 
 // Log environment variables at startup
 console.log('Environment check:', {
@@ -343,9 +289,10 @@ app.get('/api/check-auth', (req, res) => {
 // Serve static files after API routes
 app.use(express.static(__dirname));
 
-// Ensure RedisStore is connected before starting server
-redisClient.on('error', (err) => console.error('Redis Error:', err));
-await redisClient.connect();
+// Clean shutdown for Redis
+process.on('SIGTERM', () => {
+  redisClient.quit();
+});
 
 // Start the server
 app.listen(port, () => {
