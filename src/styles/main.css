@@ -265,161 +265,7 @@ body {
 .post-image-container {
   position: relative;
   width: 100%;
-  background: #f8f9fa;
-  overflow: hidden;
-}
-
-.preview-image {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: contain;
-}
-
-/* Post Content */
-.post-content,
-.preview-content {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-/* Post Header */
-.post-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.post-header img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.post-header-info {
-  flex: 1;
-}
-
-.post-header-info h3 {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-/* Post Caption */
-.post-caption {
-  font-size: 0.875rem;
-  color: #4a4a4a;
-  line-height: 1.5;
-  margin: 0;
-  padding: 0 1rem;
-}
-
-/* Post Meta */
-.post-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-top: 1px solid #e5e7eb;
-  font-size: 0.75rem;
-  color: #6B7280;
-}
-
-/* Platform Badge */
-.platform-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: white;
-}
-
-.platform-badge.facebook {
-  background: #1877f2;
-}
-
-.platform-badge.instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-}
-
-/* Post Actions */
-.post-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
-}
-
-.action-btn.edit {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.action-btn.delete {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-}
-
-/* Grid Containers */
-#previewContainer,
-#scheduledPosts,
-#igPostQueue {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-  padding: 1.5rem;
-  width: 100%;
-}
-
-/* Preview Card */
-.preview-card {
-  position: relative;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-}
-
-.preview-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-}
-
-/* Post Image Container */
-.preview-image-container {
-  position: relative;
-  width: 100%;
-  padding-bottom: 75%;
+  padding-bottom: 125%; /* 4:5 aspect ratio for portrait images */
   background: #f8f9fa;
   overflow: hidden;
 }
@@ -430,7 +276,8 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f8f9fa;
   transition: transform 0.3s ease;
 }
 
@@ -1222,5 +1069,60 @@ h3 {
   
   .csv-builder-section .form-section {
     margin-bottom: 1rem;
+  }
+}
+
+/* --- Page Groups Section Improvements --- */
+#mainContent h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.page-groups-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.page-groups-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+}
+
+#groupSelect {
+  min-width: 180px;
+  margin-bottom: 0.5rem;
+}
+
+.group-action-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+#groupNameInput {
+  min-width: 220px;
+  margin-right: 0.75rem;
+}
+
+#saveGroupBtn {
+  margin-left: 0;
+  min-width: 120px;
+}
+
+@media (max-width: 600px) {
+  .page-groups-row, .group-action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  #groupNameInput, #saveGroupBtn {
+    min-width: 0;
+    width: 100%;
   }
 } 

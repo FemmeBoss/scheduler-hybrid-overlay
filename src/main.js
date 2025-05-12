@@ -508,7 +508,7 @@ function renderScheduledPosts() {
           <span>Watermark</span>
         </div>
       ` : ''}
-      <img src="${post.imageUrl}" alt="Scheduled post" class="post-image">
+      ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Scheduled post" class="post-image">` : ''}
       <p class="post-caption">${post.caption}</p>
       <div class="post-meta">
         <div class="post-platform">
