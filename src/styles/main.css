@@ -422,21 +422,15 @@ body {
 /* Preview Container Grid Layout */
 #previewContainer {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   padding: 1.5rem;
   width: 100%;
-  max-width: 1600px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 /* Responsive Grid */
-@media (max-width: 1400px) {
-  #previewContainer {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 @media (max-width: 1100px) {
   #previewContainer {
     grid-template-columns: repeat(2, 1fr);
@@ -1168,4 +1162,34 @@ h3 {
   width: 18px;
   height: 18px;
   stroke: currentColor;
+}
+
+/* Time Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal[style*="display: block"] {
+  display: flex !important;
+  opacity: 1;
+}
+
+.modal .modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  position: relative;
+  text-align: center;
 } 
