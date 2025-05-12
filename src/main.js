@@ -229,11 +229,11 @@ function openWatermarkModal(profileId) {
       msg.textContent = 'No watermark found for this profile.';
     });
 
-  showModal('watermarkModal');
+  modal.classList.add('active');
 }
 
 document.getElementById('closeWatermarkModal').onclick = () => {
-  document.getElementById('watermarkModal').style.display = 'none';
+  document.getElementById('watermarkModal').classList.remove('active');
 };
 
 document.getElementById('uploadWatermarkBtn').onclick = async () => {
