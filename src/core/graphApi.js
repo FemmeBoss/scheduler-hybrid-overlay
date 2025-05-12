@@ -10,7 +10,7 @@ window.addEventListener('fb-token-ready', (e) => {
   fetchAllPages(e.detail);
 });
 
-async function fetchAllPages(token) {
+export async function fetchAllPages(token) {
   console.log('[DEBUG] Fetching pages with token length:', token?.length);
   
   const allPages = [];
