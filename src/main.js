@@ -744,38 +744,29 @@ async function displayDefaultTimesInSidebar() {
     const checkbox = profile.querySelector('input[type="checkbox"]');
     const profileId = checkbox?.dataset.id;
     if (!profileId) continue;
-    // Remove any previous default time display
-    const old = profile.querySelector('.default-time-badge');
-    if (old) old.remove();
+    // Find the .default-time-label span
+    const labelSpan = profile.querySelector('.default-time-label');
+    if (!labelSpan) continue;
     try {
       const snap = await getDoc(doc(db, 'default_times', profileId));
-      const badge = document.createElement('span');
-      badge.className = 'default-time-badge';
-      badge.style.fontSize = '12px';
-      badge.style.color = '#888';
-      badge.style.marginLeft = '6px';
-      badge.style.verticalAlign = 'middle';
-      badge.style.background = '#f3f3f3';
-      badge.style.borderRadius = '8px';
-      badge.style.padding = '2px 6px';
-      badge.style.display = 'inline-block';
       if (snap.exists() && snap.data().time) {
-        badge.textContent = `⏰ ${snap.data().time}`;
+        labelSpan.textContent = `⏰ ${snap.data().time}`;
+        labelSpan.style.color = '#888';
+        labelSpan.style.fontSize = '12px';
+        labelSpan.style.marginLeft = '6px';
+        labelSpan.style.verticalAlign = 'middle';
+        labelSpan.style.background = '#f3f3f3';
+        labelSpan.style.borderRadius = '8px';
+        labelSpan.style.padding = '2px 6px';
+        labelSpan.style.display = 'inline-block';
       } else {
-        badge.textContent = 'No default time';
-        badge.style.color = '#bbb';
-        badge.style.background = 'transparent';
-        badge.style.padding = '2px 0';
-      }
-      // Insert after the page name (label)
-      const label = profile.querySelector('label');
-      if (label) {
-        label.appendChild(badge);
-      } else {
-        profile.querySelector('.profile-info')?.appendChild(badge);
+        labelSpan.textContent = 'No default time';
+        labelSpan.style.color = '#bbb';
+        labelSpan.style.background = 'transparent';
+        labelSpan.style.padding = '2px 0';
       }
     } catch (err) {
-      // Ignore errors
+      labelSpan.textContent = '';
     }
   }
 }
