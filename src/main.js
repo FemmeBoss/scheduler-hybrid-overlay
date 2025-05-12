@@ -734,8 +734,42 @@ window.renderPreviewCard = async function(page, post, hasWatermark) {
   }
 };
 
-// Update previewPosts to show a warning if no default time is set for a page
+// Add function to display default time in sidebar
+async function displayDefaultTimesInSidebar() {
+  const fbProfiles = document.querySelectorAll('#facebookPages .profile-container');
+  const igProfiles = document.querySelectorAll('#instagramPages .profile-container');
+  const allProfiles = [...fbProfiles, ...igProfiles];
+
+  for (const profile of allProfiles) {
+    const checkbox = profile.querySelector('input[type="checkbox"]');
+    const profileId = checkbox?.dataset.id;
+    if (!profileId) continue;
+    // Remove any previous default time display
+    const old = profile.querySelector('.default-time-display');
+    if (old) old.remove();
+    try {
+      const snap = await getDoc(doc(db, 'default_times', profileId));
+      if (snap.exists() && snap.data().time) {
+        const div = document.createElement('div');
+        div.className = 'default-time-display';
+        div.style.fontSize = '12px';
+        div.style.color = '#888';
+        div.style.marginLeft = '8px';
+        div.textContent = `⏰ Default: ${snap.data().time}`;
+        profile.querySelector('.profile-info')?.appendChild(div);
+      }
+    } catch (err) {
+      // Ignore errors
+    }
+  }
+}
+window.displayDefaultTimesInSidebar = displayDefaultTimesInSidebar;
+window.addEventListener('fb-pages-ready', displayDefaultTimesInSidebar);
+window.addEventListener('DOMContentLoaded', displayDefaultTimesInSidebar);
+
+// Add debug logs and fix timezone handling in previewPosts
 window.previewPosts = async function() {
+  console.log('[DEBUG] previewPosts called');
   const container = document.getElementById('previewContainer');
   if (!container) return;
 
@@ -763,6 +797,7 @@ window.previewPosts = async function() {
     // Clear existing previews
     container.innerHTML = '';
 
+    console.log('[DEBUG] About to fetch default times for selected pages:', selectedPages.map(p => p.dataset));
     // Fetch default times for each selected page
     const defaultTimes = await Promise.all(selectedPages.map(async page => {
       const pageId = page.dataset.id;
@@ -814,16 +849,16 @@ window.previewPosts = async function() {
       for (let j = 0; j < posts.length; j++) {
         const post = posts[j];
         let scheduleDate = post.scheduleDate;
-        
-        // If no schedule date in CSV, use default time
+        // If no schedule date in CSV, use default time (local time, not UTC)
         if (!scheduleDate && defaultTimes[i]) {
           const now = new Date();
           const { hh, mm } = defaultTimes[i];
           now.setHours(hh, mm, 0, 0);
-          scheduleDate = now.toISOString().slice(0, 16);
-          console.log(`[DEBUG] Applied default time ${hh}:${mm} to post ${j} for page ${pageData.id}`);
+          // Format as local datetime-local string
+          const pad = n => n.toString().padStart(2, '0');
+          scheduleDate = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(hh)}:${pad(mm)}`;
+          console.log(`[DEBUG] Applied default time ${hh}:${mm} to post ${j} for page ${pageData.id} (local: ${scheduleDate})`);
         }
-        
         console.log(`[DEBUG] Preview card for page ${pageData.id}, post ${j}: scheduleDate=${scheduleDate}`);
         const previewCard = await window.renderPreviewCard(pageData, { ...post, scheduleDate }, hasWatermark);
         if (previewCard) {
