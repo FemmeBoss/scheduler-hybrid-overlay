@@ -266,12 +266,31 @@ function showNotification(message, type = 'info') {
 }
 
 export async function loadPages() {
-  const res = await fetch('/api/pages', {
-    credentials: 'include'
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to load pages: ${res.statusText}`);
+  // Try from localStorage
+  const cached = localStorage.getItem('fb_pages');
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      console.warn('⚠️ Failed to parse fb_pages from localStorage');
+    }
   }
-  const json = await res.json();
-  return json.pages || [];
+
+  // Fallback to server-side session fetch
+  try {
+    const res = await fetch('/api/facebook-pages', {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data?.data?.length) {
+      localStorage.setItem('fb_pages', JSON.stringify(data.data));
+      return data.data;
+    } else {
+      console.warn('⚠️ No pages received from API:', data);
+      return [];
+    }
+  } catch (err) {
+    console.error('🔥 Failed to fetch pages from /api/facebook-pages:', err);
+    return [];
+  }
 }
