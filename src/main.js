@@ -91,10 +91,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     const text = document.getElementById('csvUploadText');
 
     if (csvInput && status && text) {
-      csvInput.addEventListener('change', (e) => {
+      csvInput.addEventListener('change', async (e) => {
         if (e.target.files.length > 0) {
-          text.textContent = `CSV uploaded: ${e.target.files[0].name}`;
+          const file = e.target.files[0];
+          text.textContent = `CSV uploaded: ${file.name}`;
           status.style.opacity = '1';
+          // Try to parse the CSV and count posts
+          try {
+            const posts = await parseCsv(file);
+            showNotification(`CSV file uploaded: ${file.name} (${posts.length} posts detected)`, 'success');
+            text.textContent += ` (${posts.length} posts)`;
+          } catch (err) {
+            showNotification('Error parsing CSV file', 'error');
+            text.textContent += ' (Error reading file)';
+          }
         } else {
           text.textContent = '';
           status.style.opacity = '0';

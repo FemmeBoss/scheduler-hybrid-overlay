@@ -130,6 +130,7 @@ async function renderPages(pages, containerId, platform) {
             ${platformIcon}
             ${platform === 'facebook' ? 'Facebook' : 'Instagram'}
           </div>
+          <span class="default-time-label"></span>
         </div>
       </div>
       <div class="watermark-management">
@@ -198,9 +199,17 @@ document.getElementById('closeModal')?.addEventListener('click', () => {
 async function saveDefaultTimes(pageId, days, time) {
   try {
     await setDoc(doc(db, 'default_times', pageId), { days, time });
-    console.log("[DEBUG] Saved default times for", pageId);
+    showNotification(`Default time saved for page!`, 'success');
+    // Update the sidebar label for this page
+    const pageLabel = document.querySelector(`.profile-container input[data-id="${pageId}"]`)
+      ?.closest('.profile-container')
+      ?.querySelector('.default-time-label');
+    if (pageLabel) {
+      pageLabel.textContent = time ? `⏰ ${time}` : '';
+    }
   } catch (err) {
     console.error("🔥 Error saving default times:", err);
+    showNotification('Failed to save default time', 'error');
   }
 }
 
