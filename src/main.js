@@ -849,14 +849,21 @@ window.previewPosts = async function() {
       for (let j = 0; j < posts.length; j++) {
         const post = posts[j];
         let scheduleDate = post.scheduleDate;
-        // If no schedule date in CSV, use default time (local time, not UTC)
-        if (!scheduleDate && defaultTimes[i]) {
-          const now = new Date();
+        // If scheduleDate is missing or is just a date (no time), apply default time
+        const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+        if ((!scheduleDate || dateOnlyPattern.test(scheduleDate)) && defaultTimes[i]) {
+          let baseDate;
+          if (scheduleDate && dateOnlyPattern.test(scheduleDate)) {
+            // Parse MM/DD/YYYY or M/D/YYYY
+            const [month, day, year] = scheduleDate.split('/');
+            baseDate = new Date(year, month - 1, day);
+          } else {
+            baseDate = new Date();
+          }
           const { hh, mm } = defaultTimes[i];
-          now.setHours(hh, mm, 0, 0);
-          // Format as local datetime-local string
+          baseDate.setHours(hh, mm, 0, 0);
           const pad = n => n.toString().padStart(2, '0');
-          scheduleDate = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(hh)}:${pad(mm)}`;
+          scheduleDate = `${baseDate.getFullYear()}-${pad(baseDate.getMonth()+1)}-${pad(baseDate.getDate())}T${pad(hh)}:${pad(mm)}`;
           console.log(`[DEBUG] Applied default time ${hh}:${mm} to post ${j} for page ${pageData.id} (local: ${scheduleDate})`);
         }
         console.log(`[DEBUG] Preview card for page ${pageData.id}, post ${j}: scheduleDate=${scheduleDate}`);
