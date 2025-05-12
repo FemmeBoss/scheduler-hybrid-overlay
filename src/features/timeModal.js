@@ -1,4 +1,5 @@
 export function openTimeModal(pageId, pageName) {
+  console.log('[DEBUG] openTimeModal in timeModal.js called with:', { pageId, pageName });
   const modal = document.getElementById('timeModal');
   const title = document.getElementById('modalTitle');
   const saveBtn = document.getElementById('saveTimeBtn');

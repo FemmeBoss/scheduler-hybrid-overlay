@@ -3,6 +3,7 @@ import { storage } from './firebase-config.js';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import { ref, getDownloadURL, uploadBytes } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js';
 import { saveWatermark, getWatermark } from './idb.js'; // Import IndexedDB helpers
+import { openTimeModal } from '../features/timeModal.js';
 
 console.log("✅ [graphApi.js] loaded");
 
@@ -184,29 +185,10 @@ async function renderPages(pages, containerId, platform) {
 }
 
 // --- Time Modal Management ---
-function openTimeModal(pageId, pageName) {
-  const modal = document.getElementById('timeModal');
-  const title = document.getElementById('modalTitle');
-  const saveBtn = document.getElementById('saveTimeBtn');
-
-  if (!modal || !title || !saveBtn) {
-    console.error("❌ Modal elements not found.");
-    return;
-  }
-
-  modal.style.display = 'block';
-  title.innerText = `Set Default Times for ${pageName}`;
-  loadDefaultTimes(pageId);
-
-  saveBtn.onclick = () => {
-    const selectedDays = Array.from(document.querySelectorAll('.weekday-checkbox:checked')).map(cb => cb.value);
-    const selectedTime = document.getElementById('modalTime').value;
-    saveDefaultTimes(pageId, selectedDays, selectedTime);
-    modal.style.display = 'none';
-  };
-}
-
-window.openTimeModal = openTimeModal;
+window.openTimeModal = function(pageId, pageName) {
+  console.log('[DEBUG] openTimeModal called with:', { pageId, pageName });
+  openTimeModal(pageId, pageName);
+};
 
 document.getElementById('closeModal')?.addEventListener('click', () => {
   const modal = document.getElementById('timeModal');
