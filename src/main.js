@@ -913,3 +913,57 @@ function validateInputs() {
     }
   }
 }
+
+// --- CSV BUILDER: Apply Default Time Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+  const applyDefaultTimeCheckbox = document.getElementById('applyDefaultTime');
+  const datesTextarea = document.getElementById('dates');
+  const imageInput = document.getElementById('imageInput');
+
+  if (applyDefaultTimeCheckbox && datesTextarea && imageInput) {
+    applyDefaultTimeCheckbox.addEventListener('change', async function () {
+      if (this.checked) {
+        // Get selected pages (checkboxes)
+        const selectedCheckboxes = document.querySelectorAll('#facebookPages input[type="checkbox"]:checked, #instagramPages input[type="checkbox"]:checked');
+        if (!selectedCheckboxes.length) {
+          showNotification('Select at least one page to apply default time.', 'warning');
+          this.checked = false;
+          return;
+        }
+        // Get number of images
+        const imageCount = imageInput.files.length;
+        if (imageCount === 0) {
+          showNotification('Upload images before applying default time.', 'warning');
+          this.checked = false;
+          return;
+        }
+        // Fetch default times for each selected page
+        const defaultTimes = await Promise.all(Array.from(selectedCheckboxes).map(async cb => {
+          const pageId = cb.dataset.id;
+          try {
+            const snap = await getDoc(doc(db, 'default_times', pageId));
+            if (snap.exists() && snap.data().time) {
+              // Use today's date with the default time (HH:mm)
+              const now = new Date();
+              const [hh, mm] = snap.data().time.split(':');
+              now.setHours(Number(hh), Number(mm), 0, 0);
+              return now.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+            }
+          } catch (err) {
+            // Ignore errors, fallback to blank
+          }
+          return '';
+        }));
+        // Repeat default times to match image count (if fewer pages than images)
+        let filledTimes = [];
+        for (let i = 0; i < imageCount; i++) {
+          filledTimes.push(defaultTimes[i % defaultTimes.length] || '');
+        }
+        datesTextarea.value = filledTimes.join('\n');
+      } else {
+        // Unchecked: allow manual editing
+        // (Do not clear the textarea)
+      }
+    });
+  }
+});
