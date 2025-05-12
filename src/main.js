@@ -36,6 +36,7 @@ import { restorePageSelections } from './enhancements/sessionStorageHandler.js';
 import { checkAuth, getToken } from './core/auth.js';
 
 import { collection, getDocs, doc, deleteDoc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getWatermark, saveWatermark } from './core/idb.js';
 
 // Initialize scheduledPosts array
 let scheduledPosts = [];
@@ -219,11 +220,14 @@ function openWatermarkModal(profileId) {
   preview.src = '';
   msg.textContent = '';
 
-  const fileRef = ref(storage, `watermarks/${profileId}.jpg`);
-  getDownloadURL(fileRef)
-    .then(url => {
-      preview.src = url;
-      msg.textContent = '';
+  getWatermark(profileId)
+    .then(dataUrl => {
+      if (dataUrl) {
+        preview.src = dataUrl;
+        msg.textContent = '';
+      } else {
+        msg.textContent = 'No watermark found for this profile.';
+      }
     })
     .catch(() => {
       msg.textContent = 'No watermark found for this profile.';
@@ -239,24 +243,45 @@ document.getElementById('closeWatermarkModal').onclick = () => {
 document.getElementById('uploadWatermarkBtn').onclick = async () => {
   const file = document.getElementById('watermarkUploadInput').files[0];
   if (!file) return alert('Choose a file first!');
-  try {
-    const fileRef = ref(storage, `watermarks/${currentProfileId}.jpg`);
-    await uploadBytes(fileRef, file);
-    alert('✅ Watermark uploaded!');
-    openWatermarkModal(currentProfileId);
-  } catch (err) {
-    console.error(err);
-    alert('❌ Failed to upload watermark.');
-  }
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result;
+    try {
+      await saveWatermark(currentProfileId, dataUrl);
+      alert('✅ Watermark uploaded!');
+      openWatermarkModal(currentProfileId);
+    } catch (err) {
+      console.error(err);
+      alert('❌ Failed to upload watermark.');
+    }
+  };
+  reader.readAsDataURL(file);
 };
 
 document.getElementById('deleteWatermarkBtn').onclick = async () => {
   if (!confirm('⚠️ Are you sure you want to delete this watermark?')) return;
   try {
-    const fileRef = ref(storage, `watermarks/${currentProfileId}.jpg`);
-    await deleteObject(fileRef);
-    alert('✅ Watermark deleted!');
-    openWatermarkModal(currentProfileId);
+    // Remove from IndexedDB
+    const db = await window.indexedDB.open('fbWatermarkDB', 2);
+    const tx = db.transaction('watermarks', 'readwrite');
+    tx.objectStore('watermarks').delete(currentProfileId);
+    tx.oncomplete = async () => {
+      // Remove from Firebase Storage
+      const { storage } = await import('./core/firebase-config.js');
+      const { ref, deleteObject } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js');
+      const fileRef = ref(storage, `watermarks/${currentProfileId}.jpg`);
+      try {
+        await deleteObject(fileRef);
+        alert('✅ Watermark deleted!');
+      } catch (err) {
+        console.error(err);
+        alert('❌ Failed to delete watermark from cloud.');
+      }
+      openWatermarkModal(currentProfileId);
+    };
+    tx.onerror = () => {
+      alert('❌ Failed to delete watermark locally.');
+    };
   } catch (err) {
     console.error(err);
     alert('❌ Failed to delete watermark.');
