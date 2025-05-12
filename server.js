@@ -202,7 +202,7 @@ app.post('/api/login', async (req, res) => {
     
     // Set session data
     req.session.authenticated = true;
-    req.session.token = 'admin-token';
+    req.session.token = process.env.FACEBOOK_PERMANENT_TOKEN;
     req.session.hasToken = true;
     
     // Save session explicitly
