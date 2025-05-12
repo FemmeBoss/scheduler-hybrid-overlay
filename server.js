@@ -78,10 +78,10 @@ app.use((req, res, next) => {
 
 // CORS middleware
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
+  const origin = req.headers.origin || '*';
   console.log('Request origin:', origin);
   
-  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -108,7 +108,7 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Changed to false to allow non-HTTPS cookies
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
@@ -122,7 +122,8 @@ app.use((req, res, next) => {
     id: req.session.id,
     authenticated: req.session.authenticated,
     hasToken: !!req.session.token,
-    cookie: req.session.cookie
+    cookie: req.session.cookie,
+    headers: req.headers.cookie // Log the cookie header
   });
   next();
 });
@@ -159,7 +160,8 @@ app.post('/api/login', async (req, res) => {
     id: req.session.id,
     authenticated: req.session.authenticated,
     hasToken: !!req.session.token,
-    cookie: req.session.cookie
+    cookie: req.session.cookie,
+    headers: req.headers.cookie
   });
   
   const { username, password } = req.body;
@@ -198,14 +200,15 @@ app.post('/api/login', async (req, res) => {
         id: req.session.id,
         authenticated: req.session.authenticated,
         hasToken: !!req.session.token,
-        cookie: req.session.cookie
+        cookie: req.session.cookie,
+        headers: req.headers.cookie
       });
       
       // Set cookie explicitly
       res.cookie('connect.sid', req.session.id, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: false, // Changed to false
         sameSite: 'lax',
         path: '/'
       });
