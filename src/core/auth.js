@@ -24,7 +24,7 @@ document.getElementById('loginBtn')?.addEventListener('click', () => {
 });
 
 // Handling the token acquisition after the redirect
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   const resultsEl = document.getElementById('results');
 
   if (window.location.hash.includes('access_token')) {
@@ -39,13 +39,55 @@ window.addEventListener('load', () => {
       resultsEl.innerHTML = `✅ Access Token Acquired`;
     }
 
-    window.dispatchEvent(new CustomEvent('fb-token-ready', { detail: accessToken }));
+    try {
+      // Fetch pages immediately after getting token
+      const response = await fetch(`https://graph.facebook.com/v18.0/me/accounts?fields=id,name,access_token,picture{url},instagram_business_account&limit=100&access_token=${accessToken}`);
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error("[DEBUG] Error fetching pages:", data.error);
+        return;
+      }
+
+      console.log("[DEBUG] Pages fetched successfully:", data.data.length);
+      
+      // Store pages in localStorage for persistence
+      localStorage.setItem('fb_pages', JSON.stringify(data.data));
+      
+      // Dispatch event for page data ready
+      window.dispatchEvent(new CustomEvent('fb-pages-ready', { detail: data.data }));
+      
+      // Redirect to main page after successful login
+      window.location.href = '/';
+    } catch (err) {
+      console.error("[DEBUG] Error fetching pages:", err);
+    }
   } else {
     const token = localStorage.getItem('fb_access_token');
     if (token) {
       console.log("[DEBUG] Token loaded from storage.");
       if (resultsEl) resultsEl.innerHTML = `✅ Token Loaded from Storage`;
-      window.dispatchEvent(new CustomEvent('fb-token-ready', { detail: token }));
+      
+      try {
+        // Fetch pages with stored token
+        const response = await fetch(`https://graph.facebook.com/v18.0/me/accounts?fields=id,name,access_token,picture{url},instagram_business_account&limit=100&access_token=${token}`);
+        const data = await response.json();
+        
+        if (data.error) {
+          console.error("[DEBUG] Error fetching pages:", data.error);
+          return;
+        }
+
+        console.log("[DEBUG] Pages fetched successfully:", data.data.length);
+        
+        // Store pages in localStorage for persistence
+        localStorage.setItem('fb_pages', JSON.stringify(data.data));
+        
+        // Dispatch event for page data ready
+        window.dispatchEvent(new CustomEvent('fb-pages-ready', { detail: data.data }));
+      } catch (err) {
+        console.error("[DEBUG] Error fetching pages:", err);
+      }
     }
   }
 });
@@ -87,9 +129,38 @@ export async function checkAuth() {
       credentials: 'include'
     });
     const data = await res.json();
+    console.log("[DEBUG] Auth check response:", data);
     return data.authenticated;
   } catch (err) {
     console.error("[DEBUG] Error checking auth status:", err);
     return false;
   }
 }
+
+// Add event listener for token ready
+window.addEventListener('fb-token-ready', async (e) => {
+  console.log("[DEBUG] Facebook token ready event received");
+  const token = e.detail;
+  if (token) {
+    try {
+      // Fetch pages using the token
+      const response = await fetch(`https://graph.facebook.com/v18.0/me/accounts?fields=id,name,access_token,picture{url},instagram_business_account&limit=100&access_token=${token}`);
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error("[DEBUG] Error fetching pages:", data.error);
+        return;
+      }
+
+      console.log("[DEBUG] Pages fetched successfully:", data.data.length);
+      
+      // Store pages in localStorage for persistence
+      localStorage.setItem('fb_pages', JSON.stringify(data.data));
+      
+      // Dispatch event for page data ready
+      window.dispatchEvent(new CustomEvent('fb-pages-ready', { detail: data.data }));
+    } catch (err) {
+      console.error("[DEBUG] Error fetching pages:", err);
+    }
+  }
+});

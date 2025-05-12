@@ -1006,4 +1006,53 @@ h3 {
   color: #ef4444;
   border-color: #ef4444;
   background-color: rgba(239, 68, 68, 0.1);
+}
+
+#pages-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.page-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-item:hover {
+  background-color: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.page-item.selected {
+  border-color: #1877f2;
+  background-color: #e7f3ff;
+}
+
+.page-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 1rem;
+}
+
+.page-name {
+  font-weight: 500;
+  color: #1c1e21;
+}
+
+.instagram-badge {
+  margin-left: auto;
+  background-color: #e1306c;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
 } 

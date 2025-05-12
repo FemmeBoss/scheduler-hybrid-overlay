@@ -22,9 +22,10 @@ try {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
     socket: {
       reconnectStrategy: (retries) => {
+        console.log(`Redis connection attempt ${retries}`);
         if (retries > 10) {
-          console.error('Redis max retries reached');
-          return new Error('Redis max retries reached');
+          console.log('Redis max retries reached, falling back to MemoryStore');
+          return false;
         }
         return Math.min(retries * 100, 3000);
       }
@@ -32,27 +33,12 @@ try {
   });
 
   // Connect to Redis
-  redisClient.connect().then(() => {
-    console.log('Redis connected successfully');
-    sessionStore = new RedisStore({ 
-      client: redisClient,
-      prefix: 'sess:',
-      ttl: 86400 // 24 hours in seconds
-    });
-  }).catch(err => {
-    console.error('Failed to connect to Redis:', err);
-    console.log('Falling back to MemoryStore');
-    sessionStore = new session.MemoryStore();
-  });
-
-  redisClient.on('error', (err) => {
-    console.error('Redis Client Error:', err);
-    console.log('Falling back to MemoryStore');
-    sessionStore = new session.MemoryStore();
-  });
+  await redisClient.connect();
+  console.log('Connected to Redis successfully');
+  sessionStore = new RedisStore({ client: redisClient });
 } catch (err) {
-  console.error('Error initializing Redis:', err);
-  console.log('Using MemoryStore');
+  console.error('Failed to connect to Redis:', err);
+  console.log('Falling back to MemoryStore');
   sessionStore = new session.MemoryStore();
 }
 
@@ -78,26 +64,41 @@ app.use((req, res, next) => {
 
 // CORS middleware
 app.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
-  console.log('Request origin:', origin);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log('Request origin:', req.headers.origin || '*');
   
-  res.header('Access-Control-Allow-Origin', origin);
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  // Set CORS headers based on origin
+  const allowedOrigins = [
+    'https://femme-boss-social-scheduler.onrender.com',
+    'http://localhost:3000'
+  ];
+  const origin = req.headers.origin;
   
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
-    return res.sendStatus(200);
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
+  
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   console.log('CORS headers set:', {
     origin: res.getHeader('Access-Control-Allow-Origin'),
     credentials: res.getHeader('Access-Control-Allow-Credentials'),
     methods: res.getHeader('Access-Control-Allow-Methods')
   });
-  
+
+  // Log session state
+  console.log('Session state:', {
+    id: req.sessionID,
+    authenticated: req.session.authenticated,
+    hasToken: !!req.session.token,
+    cookie: req.session.cookie,
+    headers: req.headers.cookie
+  });
+
   next();
 });
 
@@ -107,11 +108,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
   resave: true,
   saveUninitialized: true,
-  cookie: { 
-    secure: false, // Changed to false to allow non-HTTPS cookies
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax',
     path: '/'
   }
 }));
@@ -157,7 +158,7 @@ app.post('/api/login', async (req, res) => {
   console.log('Headers:', req.headers);
   console.log('Body:', { ...req.body, password: '****' });
   console.log('Session before:', {
-    id: req.session.id,
+    id: req.sessionID,
     authenticated: req.session.authenticated,
     hasToken: !!req.session.token,
     cookie: req.session.cookie,
@@ -173,51 +174,36 @@ app.post('/api/login', async (req, res) => {
   
   console.log('Comparing credentials:', {
     receivedUsername: username,
-    receivedPassword: password ? '****' : undefined,
-    expectedUsername: secrets.username,
-    expectedPassword: secrets.password ? '****' : undefined
+    receivedPassword: '****',
+    expectedUsername: process.env.ADMIN_USERNAME,
+    expectedPassword: '****'
   });
   
-  if (username === secrets.username && password === secrets.password) {
+  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
     console.log('Login successful for user:', username);
-    req.session.authenticated = true;
-    req.session.token = secrets.permanentToken;
     
-    try {
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => {
-          if (err) {
-            console.error('Session save error:', err);
-            reject(err);
-          } else {
-            console.log('Session saved successfully');
-            resolve();
-          }
-        });
-      });
+    // Set session data
+    req.session.authenticated = true;
+    req.session.token = 'admin-token';
+    
+    // Save session explicitly
+    req.session.save((err) => {
+      if (err) {
+        console.error('Error saving session:', err);
+        return res.status(500).json({ error: 'Failed to save session' });
+      }
       
+      console.log('Session saved successfully');
       console.log('Session after save:', {
-        id: req.session.id,
+        id: req.sessionID,
         authenticated: req.session.authenticated,
         hasToken: !!req.session.token,
         cookie: req.session.cookie,
         headers: req.headers.cookie
       });
       
-      // Set cookie explicitly
-      res.cookie('connect.sid', req.session.id, {
-        maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        secure: false, // Changed to false
-        sameSite: 'lax',
-        path: '/'
-      });
-      
       res.json({ success: true });
-    } catch (err) {
-      console.error('Failed to save session:', err);
-      res.status(500).json({ error: 'Failed to save session' });
-    }
+    });
   } else {
     console.log('Login failed: Invalid credentials');
     res.status(401).json({ error: 'Invalid credentials' });
