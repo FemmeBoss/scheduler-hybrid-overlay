@@ -166,6 +166,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  position: relative;
+  width: 100%;
 }
 
 .profile-header img {
@@ -178,6 +180,9 @@ body {
 .profile-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 /* Platform Indicator */
@@ -251,6 +256,7 @@ body {
   flex-direction: column;
   position: relative;
   margin-bottom: 1rem;
+  height: 100%; /* Ensure all cards have same height */
 }
 
 .preview-card:hover,
@@ -411,6 +417,17 @@ body {
 .action-btn:hover {
   transform: translateY(-1px);
   filter: brightness(1.1);
+}
+
+/* Preview Container Grid Layout */
+#previewContainer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 /* Responsive Grid */
@@ -1125,4 +1142,30 @@ h3 {
     min-width: 0;
     width: 100%;
   }
+}
+
+/* Set Default Time Button */
+.set-default-time-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+  color: #6366f1;
+}
+
+.set-default-time-btn:hover {
+  background-color: rgba(99, 102, 241, 0.1);
+  transform: scale(1.1);
+}
+
+.set-default-time-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
 } 
