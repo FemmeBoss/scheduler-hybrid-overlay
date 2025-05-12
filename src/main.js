@@ -748,8 +748,27 @@ window.previewPosts = async function() {
     // Clear existing previews
     container.innerHTML = '';
 
-    // Create preview for each selected page
-    for (const page of selectedPages) {
+    // Fetch default times for each selected page
+    const defaultTimes = await Promise.all(selectedPages.map(async page => {
+      const pageId = page.dataset.id;
+      try {
+        const snap = await getDoc(doc(db, 'default_times', pageId));
+        if (snap.exists() && snap.data().time) {
+          // Use today's date with the default time (HH:mm)
+          const now = new Date();
+          const [hh, mm] = snap.data().time.split(':');
+          now.setHours(Number(hh), Number(mm), 0, 0);
+          return now.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+        }
+      } catch (err) {
+        // Ignore errors, fallback to blank
+      }
+      return '';
+    }));
+
+    // For each selected page, create a preview for each post/image
+    for (let i = 0; i < selectedPages.length; i++) {
+      const page = selectedPages[i];
       const pageData = {
         id: page.dataset.id,
         name: page.dataset.name,
@@ -773,12 +792,19 @@ window.previewPosts = async function() {
         hasWatermark = false;
       }
 
-      const previewCard = await window.renderPreviewCard(pageData, posts[0], hasWatermark);
-      if (previewCard) {
-        container.appendChild(previewCard);
+      // For each post/image, create a preview card with the default time
+      for (let j = 0; j < posts.length; j++) {
+        const post = posts[j];
+        // Use the default time for this page, or blank if not set
+        let scheduleDate = defaultTimes[i] || '';
+        // If the post has a date, prefer that
+        if (post.scheduleDate) scheduleDate = post.scheduleDate;
+        const previewCard = await window.renderPreviewCard(pageData, { ...post, scheduleDate }, hasWatermark);
+        if (previewCard) {
+          container.appendChild(previewCard);
+        }
       }
     }
-    
     // Update schedule button state after previews are loaded
     updateScheduleButton();
   } catch (err) {
