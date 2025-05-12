@@ -6,6 +6,8 @@ import fs from 'fs';
 import session from 'express-session';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const port = process.env.PORT || 7248;
@@ -16,6 +18,8 @@ const __dirname = path.dirname(__filename);
 // Initialize Redis client
 let redisClient;
 let sessionStore;
+
+const allowedOrigin = 'https://femme-boss-social-scheduler.onrender.com';
 
 // Redis connection configuration
 const redisConfig = {
@@ -104,11 +108,21 @@ console.log('Environment check:', {
 });
 
 // Middleware
+app.set('trust proxy', 1);
+
+// 🌐 Allow credentials properly
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS']
+}));
+
+// 🍪 Parse cookies from header
+app.use(cookieParser());
+
+// 📦 Parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// ⭐ Trust Render/Cloudflare proxy for secure cookies
-app.set('trust proxy', 1);
 
 // Session configuration - MUST be before any middleware that uses session
 app.use(session({
@@ -117,14 +131,25 @@ app.use(session({
   resave: false, // Don't save session if unmodified
   saveUninitialized: false, // Don't create session until something stored
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax',
+    secure: true, // Only send cookie over HTTPS
+    httpOnly: true, // Not accessible via JS
+    sameSite: 'lax', // CSRF protection
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
     path: '/'
   },
   name: 'connect.sid' // Explicitly set session cookie name
 }));
+
+// 🧩 Session debug middleware
+app.use((req, res, next) => {
+  console.log('🧩 Session middleware check:', {
+    sessionId: req.sessionID,
+    authenticated: req.session.authenticated,
+    hasToken: req.session.hasToken,
+    cookie: req.session.cookie
+  });
+  next();
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -232,6 +257,7 @@ app.post('/api/login', async (req, res) => {
     // Set session data
     req.session.authenticated = true;
     req.session.token = 'admin-token';
+    req.session.hasToken = true;
     
     // Save session explicitly
     req.session.save((err) => {
@@ -316,6 +342,10 @@ app.get('/api/check-auth', (req, res) => {
 
 // Serve static files after API routes
 app.use(express.static(__dirname));
+
+// Ensure RedisStore is connected before starting server
+redisClient.on('error', (err) => console.error('Redis Error:', err));
+await redisClient.connect();
 
 // Start the server
 app.listen(port, () => {
