@@ -967,3 +967,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+function injectSetDefaultTimeButtons() {
+  const fbProfiles = document.querySelectorAll('#facebookPages .profile-container');
+  const igProfiles = document.querySelectorAll('#instagramPages .profile-container');
+
+  [...fbProfiles, ...igProfiles].forEach(profile => {
+    const checkbox = profile.querySelector('input[type="checkbox"]');
+    const profileId = checkbox?.dataset.id;
+    const profileName = checkbox?.dataset.name;
+    if (profileId && profileName) {
+      // Avoid duplicate buttons
+      if (!profile.querySelector('.set-default-time-btn')) {
+        const btn = document.createElement('button');
+        btn.className = 'set-default-time-btn';
+        btn.title = 'Set Default Time';
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+        btn.style.background = 'none';
+        btn.style.border = 'none';
+        btn.style.cursor = 'pointer';
+        btn.style.marginLeft = '8px';
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          // Import openTimeModal dynamically if needed
+          if (window.openTimeModal) {
+            window.openTimeModal(profileId, profileName);
+          } else {
+            import('./features/timeModal.js').then(mod => {
+              mod.openTimeModal(profileId, profileName);
+            });
+          }
+        };
+        profile.querySelector('.profile-header')?.appendChild(btn);
+      }
+    }
+  });
+}
+
+// Inject on page load and when pages are loaded
+window.addEventListener('DOMContentLoaded', injectSetDefaultTimeButtons);
+window.addEventListener('fb-pages-ready', injectSetDefaultTimeButtons);
