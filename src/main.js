@@ -36,7 +36,7 @@ import { restorePageSelections } from './enhancements/sessionStorageHandler.js';
 import { checkAuth, getToken } from './core/auth.js';
 
 import { collection, getDocs, doc, deleteDoc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { getWatermark, saveWatermark } from './core/idb.js';
+import { getWatermark, saveWatermark, openDatabase } from './core/idb.js';
 
 // Initialize scheduledPosts array
 let scheduledPosts = [];
@@ -261,8 +261,8 @@ document.getElementById('uploadWatermarkBtn').onclick = async () => {
 document.getElementById('deleteWatermarkBtn').onclick = async () => {
   if (!confirm('⚠️ Are you sure you want to delete this watermark?')) return;
   try {
-    // Remove from IndexedDB
-    const db = await window.indexedDB.open('fbWatermarkDB', 2);
+    // Remove from IndexedDB using openDatabase from idb.js
+    const db = await openDatabase();
     const tx = db.transaction('watermarks', 'readwrite');
     tx.objectStore('watermarks').delete(currentProfileId);
     tx.oncomplete = async () => {
