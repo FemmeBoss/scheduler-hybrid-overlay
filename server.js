@@ -17,30 +17,79 @@ const __dirname = path.dirname(__filename);
 let redisClient;
 let sessionStore;
 
-try {
-  redisClient = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
-    socket: {
-      reconnectStrategy: (retries) => {
-        console.log(`Redis connection attempt ${retries}`);
-        if (retries > 10) {
-          console.log('Redis max retries reached, falling back to MemoryStore');
-          return false;
-        }
-        return Math.min(retries * 100, 3000);
+// Redis connection configuration
+const redisConfig = {
+  url: process.env.REDIS_URL,
+  socket: {
+    reconnectStrategy: (retries) => {
+      console.log(`Redis connection attempt ${retries}`);
+      if (retries > 10) {
+        console.error('Redis max retries reached');
+        return false;
       }
+      return Math.min(retries * 100, 3000);
     }
-  });
+  }
+};
 
-  // Connect to Redis
-  await redisClient.connect();
-  console.log('Connected to Redis successfully');
-  sessionStore = new RedisStore({ client: redisClient });
-} catch (err) {
-  console.error('Failed to connect to Redis:', err);
-  console.log('Falling back to MemoryStore');
-  sessionStore = new session.MemoryStore();
-}
+// Connect to Redis with retry logic
+const connectToRedis = async () => {
+  try {
+    if (!process.env.REDIS_URL) {
+      throw new Error('REDIS_URL not set');
+    }
+
+    redisClient = createClient(redisConfig);
+    
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+    });
+
+    redisClient.on('connect', () => {
+      console.log('Redis Client Connected');
+    });
+
+    redisClient.on('reconnecting', () => {
+      console.log('Redis Client Reconnecting');
+    });
+
+    await redisClient.connect();
+    console.log('Connected to Redis successfully');
+    
+    // Test Redis connection
+    await redisClient.ping();
+    console.log('Redis ping successful');
+    
+    return true;
+  } catch (err) {
+    console.error('Failed to connect to Redis:', err);
+    return false;
+  }
+};
+
+// Initialize session store
+const initializeSessionStore = async () => {
+  const redisConnected = await connectToRedis();
+  
+  if (redisConnected) {
+    sessionStore = new RedisStore({ 
+      client: redisClient,
+      prefix: 'sess:',
+      ttl: 86400 // 24 hours in seconds
+    });
+    console.log('Using RedisStore for sessions');
+  } else {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Redis connection failed in production environment');
+      process.exit(1);
+    }
+    console.log('Falling back to MemoryStore (development only)');
+    sessionStore = new session.MemoryStore();
+  }
+};
+
+// Initialize session store before starting server
+await initializeSessionStore();
 
 // Log environment variables at startup
 console.log('Environment check:', {
@@ -60,15 +109,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'femme-boss-secret-key',
-  resave: true,
-  saveUninitialized: true,
+  resave: false, // Don't save session if unmodified
+  saveUninitialized: false, // Don't create session until something stored
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax',
     path: '/'
-  }
+  },
+  name: 'connect.sid' // Explicitly set session cookie name
 }));
 
 // Request logging middleware
