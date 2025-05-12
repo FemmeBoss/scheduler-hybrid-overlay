@@ -53,13 +53,43 @@ window.addEventListener('load', () => {
 // Define and export the getToken function
 export async function getToken() {
   try {
-    const res = await fetch('/api/check-auth');
+    console.log("[DEBUG] Checking authentication status...");
+    const res = await fetch('/api/check-auth', {
+      credentials: 'include' // Important: include credentials
+    });
     const data = await res.json();
+    console.log("[DEBUG] Auth check response:", data);
+    
     if (data.authenticated && data.token) {
+      console.log("[DEBUG] User is authenticated with token");
       return data.token;
+    } else {
+      console.log("[DEBUG] User is not authenticated");
+      // Redirect to login if not authenticated
+      if (window.location.pathname !== '/login.html') {
+        window.location.href = '/login.html';
+      }
     }
   } catch (err) {
-    console.error("Error getting token:", err);
+    console.error("[DEBUG] Error checking authentication:", err);
+    // Redirect to login on error
+    if (window.location.pathname !== '/login.html') {
+      window.location.href = '/login.html';
+    }
   }
   return null;
+}
+
+// Add a function to check authentication status
+export async function checkAuth() {
+  try {
+    const res = await fetch('/api/check-auth', {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    return data.authenticated;
+  } catch (err) {
+    console.error("[DEBUG] Error checking auth status:", err);
+    return false;
+  }
 }

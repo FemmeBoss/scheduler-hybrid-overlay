@@ -36,34 +36,40 @@
     <div id="content">
       <h1 class="fancy-title">Femme Boss Scheduler</h1>
 
-      <button id="loginBtn" class="btn btn-primary">Log in with Facebook</button>
-      <div id="results">Awaiting login...</div>
-
-      <h2>Page Groups</h2>
-      <select id="groupSelect" class="btn btn-secondary"><option value="">Select a saved group</option></select>
-      <input type="text" id="groupNameInput" placeholder="Group name" />
-      <button id="saveGroupBtn" class="btn btn-primary">Save Group</button>
-
-      <h2>Upload Posts CSV</h2>
-      <div id="dropZone">Drag & Drop CSV or Click Here</div>
-      <input type="file" id="postCsv" accept=".csv" style="display: none;">
-      <div id="csvUploadStatus" style="margin-top:10px; display:flex; align-items:center; gap:8px; opacity:0;">
-        <svg id="csvCheckIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#4CAF50" viewBox="0 0 24 24">
-          <path d="M9 16.2l-3.5-3.5L4 14l5 5 12-12-1.4-1.4z"/>
-        </svg>
-        <span id="csvUploadText" style="font-size:14px; color:#4CAF50;">CSV Uploaded</span>
+      <!-- Login Section -->
+      <div id="loginSection" style="display: none;">
+        <p>Please log in to access the scheduler.</p>
+        <a href="/login.html" class="btn btn-primary">Go to Login</a>
       </div>
 
-      <!-- 📸 Buttons -->
-      <div id="buttonContainer">
-        <button id="previewBtn" class="btn btn-primary">Preview Posts</button>
-        <button id="scheduleBtn" class="btn btn-success" disabled>Schedule to Selected Pages</button>
-        <button id="viewScheduledBtn" class="btn btn-secondary">View Scheduled Posts</button>
-      </div>
+      <!-- Main Content Section -->
+      <div id="mainContent" style="display: none;">
+        <h2>Page Groups</h2>
+        <select id="groupSelect" class="btn btn-secondary"><option value="">Select a saved group</option></select>
+        <input type="text" id="groupNameInput" placeholder="Group name" />
+        <button id="saveGroupBtn" class="btn btn-primary">Save Group</button>
 
-      <div id="previewContainer"></div>
-      <div id="scheduledPosts"></div>
-      <div id="statusToast" style="display: none; margin-top: 20px; color: green;"></div>
+        <h2>Upload Posts CSV</h2>
+        <div id="dropZone">Drag & Drop CSV or Click Here</div>
+        <input type="file" id="postCsv" accept=".csv" style="display: none;">
+        <div id="csvUploadStatus" style="margin-top:10px; display:flex; align-items:center; gap:8px; opacity:0;">
+          <svg id="csvCheckIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#4CAF50" viewBox="0 0 24 24">
+            <path d="M9 16.2l-3.5-3.5L4 14l5 5 12-12-1.4-1.4z"/>
+          </svg>
+          <span id="csvUploadText" style="font-size:14px; color:#4CAF50;">CSV Uploaded</span>
+        </div>
+
+        <!-- 📸 Buttons -->
+        <div id="buttonContainer">
+          <button id="previewBtn" class="btn btn-primary">Preview Posts</button>
+          <button id="scheduleBtn" class="btn btn-success" disabled>Schedule to Selected Pages</button>
+          <button id="viewScheduledBtn" class="btn btn-secondary">View Scheduled Posts</button>
+        </div>
+
+        <div id="previewContainer"></div>
+        <div id="scheduledPosts"></div>
+        <div id="statusToast" style="display: none; margin-top: 20px; color: green;"></div>
+      </div>
     </div>
 
     <!-- 🟣 Instagram Sidebar -->
@@ -152,7 +158,26 @@
     </div>
   </div>
 
-  <!-- ✅ Script goes here, after EVERYTHING -->
+  <script type="module">
+    import { checkAuth } from './src/core/auth.js';
+    
+    // Check authentication status on page load
+    window.addEventListener('DOMContentLoaded', async () => {
+      const isAuthenticated = await checkAuth();
+      const loginSection = document.getElementById('loginSection');
+      const mainContent = document.getElementById('mainContent');
+      
+      if (isAuthenticated) {
+        console.log('[DEBUG] User is authenticated, showing main content');
+        loginSection.style.display = 'none';
+        mainContent.style.display = 'block';
+      } else {
+        console.log('[DEBUG] User is not authenticated, showing login section');
+        loginSection.style.display = 'block';
+        mainContent.style.display = 'none';
+      }
+    });
+  </script>
   <script type="module" src="./src/main.js"></script>
   <script type="module" src="./src/core/igPublisher.js"></script>
 </body>
