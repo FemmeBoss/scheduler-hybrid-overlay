@@ -829,31 +829,51 @@ window.addEventListener('fb-pages-ready', (e) => {
   console.log("[DEBUG] Pages ready event received");
   const pages = e.detail;
   if (pages && pages.length > 0) {
-    // Get the pages container
-    const pagesContainer = document.getElementById('pages-container');
-    if (pagesContainer) {
-      // Clear existing content
-      pagesContainer.innerHTML = '';
-      // Create page elements
-      pages.forEach(page => {
+    // Get the Facebook pages container
+    const fbPagesContainer = document.getElementById('facebookPages');
+    if (fbPagesContainer) {
+      // Filter for Facebook pages only
+      const fbPages = pages.filter(page => !page.platform || page.platform === 'facebook');
+      fbPagesContainer.innerHTML = '';
+      fbPages.forEach(page => {
         const pageElement = document.createElement('div');
-        pageElement.className = 'page-item';
+        pageElement.className = 'profile-container';
         pageElement.innerHTML = `
-          <img src="${page.picture?.data?.url || 'default-page-icon.png'}" alt="${page.name}" class="page-icon">
-          <span class="page-name">${page.name}</span>
-          ${page.instagram_business_account ? '<span class="instagram-badge">Instagram</span>' : ''}
+          <div class="profile-header">
+            <img src="${page.picture?.data?.url || 'assets/default-profile.png'}" alt="${page.name}" onerror="this.src='assets/default-profile.png'" />
+            <div class="profile-info">
+              <label class="page-select">
+                <input type="checkbox"
+                  data-id="${page.id}"
+                  data-name="${page.name}"
+                  data-platform="facebook"
+                  data-parent-id="${page.parentPageId || ''}"
+                  data-access-token="${page.access_token || ''}"
+                  class="page-checkbox" />
+                <span class="page-name">${page.name}</span>
+              </label>
+              <div class="platform-indicator">
+                <svg class="platform-icon" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Facebook
+              </div>
+            </div>
+          </div>
+          <div class="watermark-management">
+            <button class="watermark-btn" onclick="openWatermarkModal('${page.id}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Manage Watermark
+            </button>
+            <div class="watermark-status-icon no-watermark" title="No watermark uploaded">⚠️</div>
+          </div>
         `;
-        // Add click handler
-        pageElement.addEventListener('click', () => {
-          // Store selected page
-          localStorage.setItem('selected_page', JSON.stringify(page));
-          // Update UI to show selected state
-          document.querySelectorAll('.page-item').forEach(el => el.classList.remove('selected'));
-          pageElement.classList.add('selected');
-        });
-        pagesContainer.appendChild(pageElement);
+        fbPagesContainer.appendChild(pageElement);
       });
     }
+    // Instagram sidebar remains unchanged for now
   }
 });
 
@@ -969,27 +989,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function injectSetDefaultTimeButtons() {
+  console.log('[DEBUG] Injecting Set Default Time buttons...');
+  
   const fbProfiles = document.querySelectorAll('#facebookPages .profile-container');
   const igProfiles = document.querySelectorAll('#instagramPages .profile-container');
+  
+  console.log(`[DEBUG] Found ${fbProfiles.length} Facebook profiles and ${igProfiles.length} Instagram profiles`);
 
   [...fbProfiles, ...igProfiles].forEach(profile => {
     const checkbox = profile.querySelector('input[type="checkbox"]');
     const profileId = checkbox?.dataset.id;
     const profileName = checkbox?.dataset.name;
+    
     if (profileId && profileName) {
       // Avoid duplicate buttons
       if (!profile.querySelector('.set-default-time-btn')) {
         const btn = document.createElement('button');
         btn.className = 'set-default-time-btn';
         btn.title = 'Set Default Time';
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
-        btn.style.background = 'none';
-        btn.style.border = 'none';
-        btn.style.cursor = 'pointer';
-        btn.style.marginLeft = '8px';
+        btn.setAttribute('aria-label', 'Set Default Time');
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+        
         btn.onclick = (e) => {
           e.stopPropagation();
-          // Import openTimeModal dynamically if needed
           if (window.openTimeModal) {
             window.openTimeModal(profileId, profileName);
           } else {
@@ -998,7 +1020,15 @@ function injectSetDefaultTimeButtons() {
             });
           }
         };
-        profile.querySelector('.profile-header')?.appendChild(btn);
+
+        // Find the profile-info div and append the button
+        const profileInfo = profile.querySelector('.profile-info');
+        if (profileInfo) {
+          profileInfo.appendChild(btn);
+          console.log(`[DEBUG] Added Set Default Time button for ${profileName}`);
+        } else {
+          console.warn(`[WARNING] Could not find profile-info for ${profileName}`);
+        }
       }
     }
   });
