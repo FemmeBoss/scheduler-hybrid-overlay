@@ -8,7 +8,7 @@ const WATERMARK_STORE = 'watermarks';
 const PENDING_UPLOADS_STORE = 'pendingUploads';
 const DB_VERSION = 2;
 
-function openDatabase() {
+export function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
