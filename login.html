@@ -102,67 +102,70 @@
     </button>
   </div>
 
-  <script type="module">
-    import { getToken } from '/src/core/auth.js';
-
-    // Admin login handler
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+  <script>
+    console.log('Login page script starting...');
+    
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, initializing form...');
+      
+      const loginForm = document.getElementById('loginForm');
       const errorDiv = document.getElementById('error');
       
-      console.log('Starting login attempt...');
+      if (!loginForm) {
+        console.error('Login form not found!');
+        return;
+      }
       
-      try {
-        console.log('Preparing fetch request...');
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      console.log('Login form found, adding submit handler...');
+      
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Form submitted');
         
-        const response = await fetch(`${window.location.origin}/api/login`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ username, password }),
-          credentials: 'include',
-          signal: controller.signal
-        });
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
         
-        clearTimeout(timeoutId);
-        console.log('Fetch request completed, status:', response.status);
+        console.log('Starting login attempt...');
         
-        let data;
         try {
-          data = await response.json();
-          console.log('Response data:', data);
-        } catch (jsonError) {
-          console.error('Error parsing JSON response:', jsonError);
-          errorDiv.textContent = 'Invalid server response';
-          return;
-        }
-        
-        if (response.ok) {
-          console.log('Login successful, redirecting...');
-          // Add a small delay to ensure session is saved
-          setTimeout(() => {
+          console.log('Preparing fetch request...');
+          const response = await fetch(`${window.location.origin}/api/login`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ username, password }),
+            credentials: 'include'
+          });
+          
+          console.log('Fetch request completed, status:', response.status);
+          
+          let data;
+          try {
+            data = await response.json();
+            console.log('Response data:', data);
+          } catch (jsonError) {
+            console.error('Error parsing JSON response:', jsonError);
+            errorDiv.textContent = 'Invalid server response';
+            return;
+          }
+          
+          if (response.ok) {
+            console.log('Login successful, redirecting...');
             window.location.href = '/';
-          }, 100);
-        } else {
-          console.error('Login failed:', data);
-          errorDiv.textContent = data.error || `Login failed (${response.status})`;
-        }
-      } catch (error) {
-        console.error('Network or other error:', error);
-        if (error.name === 'AbortError') {
-          errorDiv.textContent = 'Request timed out. Please try again.';
-        } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-          errorDiv.textContent = 'Network error. Please check your connection.';
-        } else {
+          } else {
+            console.error('Login failed:', data);
+            errorDiv.textContent = data.error || `Login failed (${response.status})`;
+          }
+        } catch (error) {
+          console.error('Network or other error:', error);
           errorDiv.textContent = `Error: ${error.message}`;
         }
-      }
+      });
+      
+      console.log('Form initialization complete');
     });
   </script>
   <script src="/src/core/auth.js" type="module"></script>
