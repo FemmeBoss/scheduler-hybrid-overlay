@@ -713,7 +713,10 @@ window.previewPosts = async function() {
   const container = document.getElementById('previewContainer');
   if (!container) return;
 
-  // Clear any previous error message before loading
+  // Remove any previous error message (red alert)
+  const errorMsg = container.querySelector('p[style*="color:red"]');
+  if (errorMsg) errorMsg.remove();
+  // Also clear the container for a fresh start
   container.innerHTML = '';
 
   const postFile = document.getElementById('postCsv')?.files?.[0];
