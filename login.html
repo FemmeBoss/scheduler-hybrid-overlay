@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Femme Boss Social Scheduler - Login</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Cinzel:wght@700&family=Corinthia:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Cinzel:wght@400&family=Corinthia:wght@400;700&display=swap" rel="stylesheet">
   <style>
     #youtubeBackground {
       position: fixed;
@@ -186,19 +186,20 @@
     .login-title.cinzel-lower {
       font-family: 'Cinzel', serif !important;
       color: #111 !important;
-      font-weight: 700 !important;
+      font-weight: 400 !important;
       text-transform: lowercase !important;
-      font-size: clamp(2.2rem, 6vw, 3.5rem);
+      font-size: clamp(1.5rem, 4vw, 2.3rem);
       letter-spacing: 0.5px;
-      line-height: 1.05;
+      line-height: 1.08;
       margin-bottom: 1.2rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 100%;
     }
     .login-script.corinthia {
       font-family: 'Corinthia', cursive !important;
-      color: #bfa14a;
+      color: #000000;
       font-size: 2.2rem;
       font-weight: 400;
       margin-bottom: 2.2rem;
@@ -221,7 +222,7 @@
   </video>
 
   <div class="login-container">
-    <img src="/icons/fb-crown-logo.png" alt="Femme Boss Logo" class="crown-logo" style="max-width: 90px; margin: 0 auto 1.2rem auto; display: block;" />
+    <img src="/icons/fb-crown-logo.png" alt="Femme Boss Logo" class="crown-logo" />
     <div class="login-title cinzel-lower">femme boss scheduler</div>
     <div class="login-script corinthia">Welcome Back</div>
     <form id="loginForm">
