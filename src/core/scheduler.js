@@ -746,3 +746,39 @@ async function renderPageSelection(page) {
   
   return container;
 }
+
+// Helper: Parse user-friendly or ISO date string to ISO format
+function parseUserDate(input) {
+  // Try ISO first
+  let d = new Date(input);
+  if (!isNaN(d.getTime())) return d.toISOString();
+
+  // Try user-friendly format: YYYY-MM-DD hh:mm AM/PM
+  const match = input.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2}) ?([APap][Mm])?$/);
+  if (match) {
+    let [_, year, month, day, hour, minute, ampm] = match;
+    hour = parseInt(hour, 10);
+    if (ampm) {
+      ampm = ampm.toUpperCase();
+      if (ampm === 'PM' && hour < 12) hour += 12;
+      if (ampm === 'AM' && hour === 12) hour = 0;
+    }
+    const date = new Date(year, month - 1, day, hour, minute);
+    if (!isNaN(date.getTime())) return date.toISOString();
+  }
+  return null;
+}
+
+// Patch: When reading schedule dates, use parseUserDate
+function getScheduleDatesFromTextarea() {
+  const textarea = document.getElementById('dates');
+  if (!textarea) return [];
+  const lines = textarea.value.split('\n').map(l => l.trim()).filter(Boolean);
+  const parsed = lines.map(line => parseUserDate(line));
+  const invalid = parsed.findIndex(d => !d);
+  if (invalid !== -1) {
+    alert(`Invalid date format on line ${invalid + 1}: "${lines[invalid]}".\nPlease use e.g. 2025-04-15 10:00 AM or 2025-04-15T10:00`);
+    return [];
+  }
+  return parsed;
+}
