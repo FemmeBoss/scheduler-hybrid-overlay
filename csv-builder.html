@@ -14,8 +14,23 @@
     <a href="/popup.html" class="btn-primary">Go to CSV Uploader</a>
   </div>
 
-  <div>
-    <button id="generateCsvBtn" class="btn-primary">Generate CSV File</button>
+  <div class="csv-builder-section" style="display: flex; gap: 1rem; margin-bottom: 2rem; width: 100%;">
+    <div class="form-section" style="flex: 1;">
+      <label for="imageInput"><strong>Upload Images (1-20):</strong></label>
+      <input type="file" id="imageInput" accept="image/*" multiple="">
+    </div>
+
+    <div class="form-section" style="flex: 1;">
+      <label for="captions"><strong>Captions (one per line):</strong></label>
+      <textarea id="captions" rows="6" placeholder="One caption per line..."></textarea>
+    </div>
+
+    <div class="form-section" style="flex: 1;">
+      <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label>
+      <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
+    </div>
+
+    <button id="generateCsvBtn" class="btn-primary" style="align-self: flex-end; height: 40px;">Generate CSV File</button>
   </div>
 
   <script>
