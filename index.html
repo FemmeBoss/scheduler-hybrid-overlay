@@ -252,8 +252,10 @@
             <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
           </div>
         </div>
-        <button id="processBtn" class="btn-gold">Process Files</button>
-        <button id="downloadBtn" class="btn-gold">Download CSV</button>
+        <div class="csv-builder-buttons" style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+          <button id="processBtn" class="btn-black" style="min-width: 110px;">Process Files</button>
+          <button id="downloadBtn" class="btn-black" style="min-width: 110px;" disabled>Download CSV</button>
+        </div>
         <div id="status"></div>
       </div>
 
@@ -457,7 +459,9 @@
         }
 
         button.disabled = true;
-        downloadBtn.style.display = "none";
+        downloadBtn.disabled = true;
+        downloadBtn.style.opacity = 0.6;
+        downloadBtn.style.cursor = 'not-allowed';
         status.textContent = "Uploading files...";
 
         const uploadedUrls = [];
@@ -534,7 +538,9 @@
         lastGeneratedCSV = csv;
         status.textContent = "Files uploaded successfully! Click 'Download CSV' to get your schedule.";
         button.disabled = false;
-        downloadBtn.style.display = "block";
+        downloadBtn.disabled = false;
+        downloadBtn.style.opacity = 1;
+        downloadBtn.style.cursor = 'pointer';
       });
 
       downloadBtn.addEventListener('click', () => {
