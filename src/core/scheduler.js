@@ -1,6 +1,6 @@
 import { savePendingWrite, processPendingWrites } from '../features/offlineQueue.js';
 import { db } from './firebase-config.js';
-import { collection, addDoc, doc, updateDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { collection, addDoc, doc, updateDoc, runTransaction, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getWatermark } from './idb.js';
 
 // ✅ Import from uploader.js (single source of truth)
@@ -132,10 +132,53 @@ async function handlePreview() {
           continue;
         }
 
-        const previewCard = await renderPreviewCard(pageData, post);
+        // Only show preview if watermark exists
+        const watermarkUrl = await getWatermark(pageData.id);
+        if (!watermarkUrl) {
+          console.warn(`[WARNING] No watermark for page ${pageData.name}, skipping preview.`);
+          continue;
+        }
+
+        // Fetch default time for this page
+        let defaultTime = '';
+        let defaultDays = [];
+        try {
+          const snap = await getDoc(doc(db, 'default_times', pageData.id));
+          if (snap.exists()) {
+            const data = snap.data();
+            defaultTime = data.time || '';
+            defaultDays = data.days || [];
+          }
+        } catch (err) {
+          console.warn(`[WARNING] Could not fetch default time for page ${pageData.name}`);
+        }
+
+        // If scheduleDate is missing time, apply default time
+        let scheduleDate = post.scheduleDate;
+        const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+        if ((!scheduleDate || dateOnlyPattern.test(scheduleDate)) && defaultTime) {
+          let baseDate;
+          if (scheduleDate && dateOnlyPattern.test(scheduleDate)) {
+            const [month, day, year] = scheduleDate.split('/');
+            baseDate = new Date(year, month - 1, day);
+          } else {
+            baseDate = new Date();
+          }
+          // Parse defaultTime (HH:mm)
+          const [h, m] = defaultTime.split(':');
+          baseDate.setHours(Number(h), Number(m), 0, 0);
+          scheduleDate = baseDate.toISOString();
+        }
+
+        // Pass default time/days to preview card for display
+        const previewCard = await renderPreviewCard(pageData, {
+          ...post,
+          scheduleDate,
+          _defaultTime: defaultTime,
+          _defaultDays: defaultDays
+        });
         if (previewCard) {
           previewContainer.appendChild(previewCard);
-          
           // Cache the post with its watermarked image
           const watermarkedImage = previewCard.querySelector('.preview-image').src;
           cachedPosts.push({
@@ -143,6 +186,7 @@ async function handlePreview() {
             pageId: pageData.id,
             pageName: pageData.name,
             platform: pageData.platform,
+            scheduleDate,
             _finalImageUrls: {
               [pageData.id]: watermarkedImage
             }
@@ -474,10 +518,11 @@ async function renderPreviewCard(page, post) {
       return null;
     }
 
-    const { imageUrl, caption, scheduleDate } = post;
+    const { imageUrl, caption, scheduleDate, _defaultTime, _defaultDays } = post;
 
-    // Get watermark for the page
+    // Get watermark for the page (already checked in handlePreview)
     const watermarkUrl = await getWatermark(page.id);
+    if (!watermarkUrl) return null;
     console.log(`[DEBUG] Watermark for ${page.name}:`, watermarkUrl);
 
     // Create preview card
@@ -488,16 +533,26 @@ async function renderPreviewCard(page, post) {
     const defaultProfileImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiNFNUU3RUIiLz48cGF0aCBkPSJNMjQgMjBDMjYuMjA5MSAyMCAyOCAxOC4yMDkxIDI4IDE2QzI4IDEzLjc5MDkgMjYuMjA5MSAxMiAyNCAxMkMyMS43OTA5IDEyIDIwIDEzLjc5MDkgMjAgMTZDMjAgMTguMjA5MSAyMS43OTA5IDIwIDI0IDIwWiIgZmlsbD0iIzk0OTk5RiIvPjxwYXRoIGQ9Ik0zMiAyOEMzMiAyNS43OTAxIDI4LjQxODMgMjQgMjQgMjRDMjAuNDE4MyAyNCAxNiAyNS43OTAxIDE2IDI4VjMySDMyVjI4WiIgZmlsbD0iIzk0OTk5RiIvPjwvc3ZnPg==';
 
     // Format the schedule date
-    const formattedDate = new Date(scheduleDate).toLocaleString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    }).replace(',', '');
+    let formattedDate = '';
+    if (scheduleDate) {
+      const d = new Date(scheduleDate);
+      formattedDate = d.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).replace(',', '');
+    }
 
-    // Apply watermark to image if watermark exists
+    // Format default days
+    let daysText = '';
+    if (_defaultDays && _defaultDays.length) {
+      daysText = ` (${_defaultDays.join(', ')})`;
+    }
+
+    // Apply watermark to image
     let finalImageUrl = imageUrl;
     if (watermarkUrl) {
       try {
@@ -509,16 +564,14 @@ async function renderPreviewCard(page, post) {
       }
     }
 
-    // Create the preview card HTML with watermark indicator next to page info
+    // Create the preview card HTML with watermark indicator and default time/days
     card.innerHTML = `
       <div class="preview-header">
         <img src="${defaultProfileImage}" alt="${page.name}" class="preview-profile">
         <div class="preview-info">
           <div class="preview-name">${page.name}</div>
           <div class="preview-platform">${page.platform}</div>
-          <div class="watermark-status ${watermarkUrl ? 'has-watermark' : 'no-watermark'}">
-            ${watermarkUrl ? '✓ Watermark Uploaded' : '⚠️ No Watermark'}
-          </div>
+          <div class="watermark-status has-watermark">✓ Watermark Uploaded</div>
         </div>
       </div>
       <div class="preview-image-container">
@@ -526,7 +579,7 @@ async function renderPreviewCard(page, post) {
       </div>
       <div class="preview-content">
         <p class="preview-caption">${caption || 'No caption'}</p>
-        <p class="preview-schedule">📅 ${formattedDate}</p>
+        <p class="preview-schedule">📅 ${formattedDate}${_defaultTime ? ` ⏰ ${_defaultTime}${daysText}` : ''}</p>
       </div>
     `;
 
