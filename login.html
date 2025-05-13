@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Femme Boss Social Scheduler - Login</title>
   <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Dancing+Script:wght@400;500&display=swap" rel="stylesheet">
   <style>
     body {
       min-height: 100vh;
@@ -58,23 +59,23 @@
     }
     .login-container button {
       width: 100%;
-      padding: 0.8rem 0;
+      padding: 0.8rem 2.2rem;
       font-size: 1.08rem;
-      font-weight: 600;
+      font-weight: 500;
       border-radius: 7px;
       border: none;
       margin-bottom: 1.1rem;
-      background: #111;
-      color: #fff;
+      background: linear-gradient(90deg, #bfa14a 0%, #f7e7b0 100%);
+      color: #111;
       letter-spacing: 0.2px;
       box-shadow: 0 1px 6px 0 rgba(191,161,74,0.10);
       cursor: pointer;
       transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Montserrat', 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
     .login-container button:hover {
-      background: linear-gradient(90deg, #bfa14a 0%, #f7e7b0 100%);
-      color: #111;
+      background: #111;
+      color: #fff;
       box-shadow: 0 2px 10px 0 rgba(191,161,74,0.18);
     }
     #loginBtn {
@@ -143,27 +144,40 @@
       padding: 0 1rem;
       color: #bfa14a;
     }
+    .login-title {
+      font-family: 'Montserrat', 'Inter', Arial, sans-serif;
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 0.5rem;
+      letter-spacing: -1px;
+      text-align: center;
+    }
+    .login-script {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2rem;
+      font-weight: 400;
+      color: #bfa14a;
+      margin-bottom: 2rem;
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="login-container">
+    <div class="login-title">Femme Boss Scheduler</div>
     <div class="social-icons">
       <img src="/icons/fb-icon.png" alt="Facebook" class="logo">
       <img src="/icons/ig-icon.png" alt="Instagram" class="logo">
     </div>
-    <h2>Welcome Back</h2>
+    <div class="login-script">Welcome Back</div>
     <form id="loginForm">
       <input type="text" id="username" placeholder="Admin Username" required />
       <input type="password" id="password" placeholder="Admin Password" required />
       <button type="submit">Admin Login</button>
       <div id="error" class="error"></div>
     </form>
-    
-    <div class="divider"><span>or</span></div>
-    
-    <button id="loginBtn" type="button">
-      Connect with Facebook
-    </button>
   </div>
 
   <script>
