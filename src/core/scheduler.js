@@ -227,118 +227,111 @@ async function handleSchedule() {
       throw new Error("No posts to schedule. Please preview posts first.");
     }
 
-    if (!cachedPages.length) {
-      throw new Error("No pages selected. Please select at least one page.");
-    }
-
     for (const post of cachedPosts) {
-      const { caption, scheduleDate, _finalImageUrls } = post;
+      const { caption, scheduleDate, pageId, pageName, platform, _finalImageUrls } = post;
+      if (!pageId || pageId === '0') {
+        console.warn(`⚠️ Skipping invalid page ID for ${pageName}`);
+        continue;
+      }
 
-      for (const page of cachedPages) {
-        if (!page.id || page.id === '0') {
-          console.warn(`⚠️ Skipping invalid page ID for ${page.name}`);
-          continue;
-        }
+      let scheduledUnix = Math.floor(new Date(scheduleDate).getTime() / 1000);
+      const nowUnix = Math.floor(Date.now() / 1000);
 
-        let scheduledUnix = Math.floor(new Date(scheduleDate).getTime() / 1000);
-        const nowUnix = Math.floor(Date.now() / 1000);
+      // Ensure minimum scheduling time is 20 minutes from now
+      if (scheduledUnix - nowUnix < 1200) {
+        console.warn("⚠️ Scheduled time too soon. Adjusted to 20 minutes from now.");
+        scheduledUnix = nowUnix + 1200;
+      }
 
-        // Ensure minimum scheduling time is 20 minutes from now
-        if (scheduledUnix - nowUnix < 1200) {
-          console.warn("⚠️ Scheduled time too soon. Adjusted to 20 minutes from now.");
-          scheduledUnix = nowUnix + 1200;
-        }
+      const finalImageUrl = _finalImageUrls?.[pageId];
+      if (!finalImageUrl) {
+        console.warn(`⚠️ No image found for ${pageName}, skipping.`);
+        continue;
+      }
 
-        const finalImageUrl = _finalImageUrls?.[page.id];
-        if (!finalImageUrl) {
-          console.warn(`⚠️ No image found for ${page.name}, skipping.`);
-          continue;
-        }
+      // Find the correct page object for access token
+      const page = cachedPages.find(p => p.id === pageId);
+      if (!page || !page.pageAccessToken) {
+        throw new Error(`Missing access token for ${pageName}`);
+      }
 
-        if (!page.pageAccessToken) {
-          throw new Error(`Missing access token for ${page.name}`);
-        }
+      try {
+        let scheduledPostId = null;
+        let scheduledResponse = null;
+        let creationId = null;
 
-        try {
-          let scheduledPostId = null;
-          let scheduledResponse = null;
-          let creationId = null;
+        if (platform === 'facebook') {
+          // Facebook scheduling
+          const formData = new FormData();
+          formData.append('url', finalImageUrl);
+          formData.append('caption', caption);
+          formData.append('access_token', page.pageAccessToken);
+          formData.append('scheduled_publish_time', scheduledUnix);
+          formData.append('published', 'false');
 
-          if (page.platform === 'facebook') {
-            // Facebook scheduling
-            const formData = new FormData();
-            formData.append('url', finalImageUrl);
-            formData.append('caption', caption);
-            formData.append('access_token', page.pageAccessToken);
-            formData.append('scheduled_publish_time', scheduledUnix);
-            formData.append('published', 'false');
-
-            scheduledResponse = await postToFacebook(page.id, formData, scheduledUnix);
-            if (scheduledResponse && scheduledResponse.id) {
-              scheduledPostId = scheduledResponse.id;
-              console.log(`[FB] Successfully scheduled post ${scheduledPostId} for ${new Date(scheduledUnix * 1000)}`);
-            } else {
-              throw new Error('No post ID returned from Facebook');
-            }
+          scheduledResponse = await postToFacebook(pageId, formData, scheduledUnix);
+          if (scheduledResponse && scheduledResponse.id) {
+            scheduledPostId = scheduledResponse.id;
+            console.log(`[FB] Successfully scheduled post ${scheduledPostId} for ${new Date(scheduledUnix * 1000)}`);
           } else {
-            // Instagram scheduling
-            console.log(`[IG] Starting upload for ${page.name} scheduled for ${new Date(scheduledUnix * 1000)}`);
-            
-            // First create the container
-            creationId = await uploadToInstagram(page.id, page.pageAccessToken, finalImageUrl, caption);
-            if (!creationId) {
-              throw new Error('Failed to create Instagram container');
-            }
+            throw new Error('No post ID returned from Facebook');
           }
+        } else {
+          // Instagram scheduling
+          console.log(`[IG] Starting upload for ${pageName} scheduled for ${new Date(scheduledUnix * 1000)}`);
+          creationId = await uploadToInstagram(pageId, page.pageAccessToken, finalImageUrl, caption);
+          if (!creationId) {
+            throw new Error('Failed to create Instagram container');
+          }
+        }
 
-          // Use a transaction to ensure atomic operations
-          await runTransaction(db, async (transaction) => {
-            // Create the scheduled post
-            const scheduledPost = {
-              pageId: page.id,
-              pageName: page.name,
-              platform: page.platform,
-              caption,
-              scheduleDate: new Date(scheduledUnix * 1000).toISOString(),
-              imageUrl: finalImageUrl,
-              postId: scheduledPostId,
+        // Use a transaction to ensure atomic operations
+        await runTransaction(db, async (transaction) => {
+          // Create the scheduled post
+          const scheduledPost = {
+            pageId,
+            pageName,
+            platform,
+            caption,
+            scheduleDate: new Date(scheduledUnix * 1000).toISOString(),
+            imageUrl: finalImageUrl,
+            postId: scheduledPostId,
+            scheduledUnix,
+            createdAt: new Date().toISOString(),
+            status: platform === 'facebook' ? 'scheduled' : 'pending',
+            scheduledResponse: scheduledResponse,
+            creationId: creationId
+          };
+
+          // Add to scheduledPosts collection
+          const scheduledPostRef = doc(collection(db, 'scheduledPosts'));
+          transaction.set(scheduledPostRef, scheduledPost);
+
+          // For Instagram posts, also add to pending queue
+          if (platform === 'instagram' && creationId) {
+            const pendingPost = {
+              pageId,
+              creationId: creationId,
+              accessToken: page.pageAccessToken,
               scheduledUnix,
+              scheduledPostId: scheduledPostRef.id,
               createdAt: new Date().toISOString(),
-              status: page.platform === 'facebook' ? 'scheduled' : 'pending',
-              scheduledResponse: scheduledResponse,
-              creationId: creationId
+              retryCount: 0
             };
 
-            // Add to scheduledPosts collection
-            const scheduledPostRef = doc(collection(db, 'scheduledPosts'));
-            transaction.set(scheduledPostRef, scheduledPost);
+            const pendingPostRef = doc(collection(db, 'pendingIGPosts'));
+            transaction.set(pendingPostRef, pendingPost);
+          }
 
-            // For Instagram posts, also add to pending queue
-            if (page.platform === 'instagram' && creationId) {
-              const pendingPost = {
-                pageId: page.id,
-                creationId: creationId,
-                accessToken: page.pageAccessToken,
-                scheduledUnix,
-                scheduledPostId: scheduledPostRef.id,
-                createdAt: new Date().toISOString(),
-                retryCount: 0
-              };
+          // Update local state
+          scheduledPosts.push({ ...scheduledPost, id: scheduledPostRef.id });
+          statusEl.innerHTML += `✅ Scheduled: ${pageName} for ${new Date(scheduledUnix * 1000).toLocaleString()}<br>`;
+        });
 
-              const pendingPostRef = doc(collection(db, 'pendingIGPosts'));
-              transaction.set(pendingPostRef, pendingPost);
-            }
-
-            // Update local state
-            scheduledPosts.push({ ...scheduledPost, id: scheduledPostRef.id });
-            statusEl.innerHTML += `✅ Scheduled: ${page.name} for ${new Date(scheduledUnix * 1000).toLocaleString()}<br>`;
-          });
-
-        } catch (err) {
-          console.error(`🔥 Error scheduling for ${page.name}:`, err);
-          statusEl.innerHTML += `❌ Failed: ${page.name} — ${err.message}<br>`;
-          throw err;
-        }
+      } catch (err) {
+        console.error(`🔥 Error scheduling for ${pageName}:`, err);
+        statusEl.innerHTML += `❌ Failed: ${pageName} — ${err.message}<br>`;
+        throw err;
       }
     }
 
@@ -362,7 +355,13 @@ async function handleSchedule() {
   }
 }
 
-// ... (rest of file continues as-is, unchanged)
+// After editing a post, update cachedPosts in memory
+window.updateCachedPost = function(postId, newData) {
+  const idx = cachedPosts.findIndex(p => p.id === postId);
+  if (idx !== -1) {
+    cachedPosts[idx] = { ...cachedPosts[idx], ...newData };
+  }
+};
 
 // Upload Logic
 async function uploadToCloudinary(blob) {
