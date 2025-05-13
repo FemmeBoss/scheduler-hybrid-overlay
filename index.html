@@ -9,10 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #f7f8fa;
+      background: #fff;
+      /* Marble background using SVG data URI */
+      background-image: url('data:image/svg+xml;utf8,<svg width="100%25" height="100%25" xmlns="http://www.w3.org/2000/svg"><rect fill="white" width="100%25" height="100%25"/><path d="M0 100 Q50 200 100 100 T200 100 T300 100 T400 100 T500 100 T600 100 T700 100 T800 100 T900 100 T1000 100" stroke="%23e5e5e5" stroke-width="2" fill="none"/><path d="M0 200 Q100 300 200 200 T400 200 T600 200 T800 200 T1000 200" stroke="%23f2f2f2" stroke-width="2" fill="none"/></svg>');
+      background-size: cover;
     }
     .main-content-card {
-      background: #fff;
+      background: rgba(255,255,255,0.98);
       border-radius: 16px;
       box-shadow: 0 4px 24px 0 rgba(0,0,0,0.06);
       padding: 2.5rem 2rem 2rem 2rem;
@@ -27,8 +30,9 @@
       font-weight: 700;
       margin-bottom: 0.3rem;
       letter-spacing: -1px;
-      color: #1a1a1a;
+      color: #111;
       text-align: center;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
     .csv-builder-subtitle {
       font-size: 1.1rem;
@@ -47,7 +51,7 @@
       flex-wrap: nowrap;
     }
     .csv-builder-section .form-section {
-      background: #f8fafd;
+      background: #faf9f6;
       border-radius: 10px;
       box-shadow: 0 1px 6px 0 rgba(0,0,0,0.02);
       padding: 1.2rem 1rem 1rem 1rem;
@@ -85,7 +89,8 @@
       max-height: 100px;
       resize: vertical;
     }
-    #generateCsvBtn {
+    /* Gold button style */
+    .btn-gold {
       display: block;
       margin: 1.7rem auto 0 auto;
       min-width: 200px;
@@ -93,21 +98,39 @@
       font-weight: 600;
       border-radius: 8px;
       padding: 0.85rem 0;
-      background: #23272f;
-      color: #fff;
+      background: linear-gradient(90deg, #bfa14a 0%, #f7e7b0 100%);
+      color: #111;
       border: none;
-      box-shadow: 0 1px 6px 0 rgba(0,0,0,0.06);
+      box-shadow: 0 1px 6px 0 rgba(191,161,74,0.10);
       letter-spacing: 0.2px;
       transition: background 0.2s, box-shadow 0.2s;
       cursor: pointer;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      text-shadow: 0 1px 0 #fff8;
     }
-    #generateCsvBtn:hover {
-      background: #11131a;
-      box-shadow: 0 2px 10px 0 rgba(35,39,47,0.10);
+    .btn-gold:hover {
+      background: linear-gradient(90deg, #f7e7b0 0%, #bfa14a 100%);
+      box-shadow: 0 2px 10px 0 rgba(191,161,74,0.18);
+    }
+    /* Black button style */
+    .btn-black {
+      background: #111;
+      color: #fff;
+      border-radius: 8px;
+      font-weight: 600;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      font-size: 1.01rem;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .btn-black:hover {
+      background: #bfa14a;
+      color: #111;
     }
     /* Page Groups Section */
     .page-groups-wrapper {
-      background: #f8fafd;
+      background: #faf9f6;
       border-radius: 10px;
       box-shadow: 0 1px 6px 0 rgba(0,0,0,0.02);
       padding: 1.2rem 1rem 1rem 1rem;
@@ -138,13 +161,14 @@
       font-weight: 500;
       padding: 0.5rem 0;
       border: none;
-      background: #23272f;
+      background: #111;
       color: #fff;
       transition: background 0.2s;
       cursor: pointer;
     }
     .group-action-buttons button:hover, #saveGroupBtn:hover {
-      background: #11131a;
+      background: #bfa14a;
+      color: #111;
     }
     @media (max-width: 900px) {
       .main-content-card {
@@ -155,7 +179,7 @@
         gap: 1.2rem;
         align-items: stretch;
       }
-      #generateCsvBtn {
+      .btn-gold {
         width: 100%;
         margin-left: 0;
       }
@@ -164,6 +188,23 @@
         gap: 0.7rem;
         align-items: stretch;
       }
+    }
+    /* Preview Posts button style */
+    #previewBtn {
+      background: linear-gradient(90deg, #bfa14a 0%, #f7e7b0 100%) !important;
+      color: #111 !important;
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      border: none !important;
+      padding: 0.5rem 1.2rem !important;
+      font-size: 1.01rem !important;
+      transition: background 0.2s !important;
+      cursor: pointer !important;
+      text-shadow: 0 1px 0 #fff8;
+    }
+    #previewBtn:hover {
+      background: linear-gradient(90deg, #f7e7b0 0%, #bfa14a 100%) !important;
+      color: #111 !important;
     }
   </style>
 </head>
@@ -210,7 +251,7 @@
             <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
           </div>
         </div>
-        <button id="generateCsvBtn" class="btn btn-primary">Generate CSV File</button>
+        <button id="generateCsvBtn" class="btn-gold">Generate CSV File</button>
       </div>
 
       <!-- Login Section -->
@@ -226,11 +267,11 @@
           <div class="page-groups-row">
             <select id="groupSelect" class="btn btn-secondary"><option value="">Select a saved group</option></select>
             <div class="group-action-buttons">
-              <button id="editGroupBtn" class="btn btn-secondary">Edit Group</button>
-              <button id="deleteGroupBtn" class="btn btn-secondary" style="font-weight: bold;">Delete Group</button>
+              <button id="editGroupBtn" class="btn-black">Edit Group</button>
+              <button id="deleteGroupBtn" class="btn-black">Delete Group</button>
             </div>
             <input type="text" id="groupNameInput" placeholder="Group name" />
-            <button id="saveGroupBtn" class="btn btn-primary">Save Group</button>
+            <button id="saveGroupBtn" class="btn-black">Save Group</button>
           </div>
         </div>
 
