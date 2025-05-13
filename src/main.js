@@ -89,6 +89,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     const csvInput = document.getElementById('postCsv');
     const status = document.getElementById('csvUploadStatus');
     const text = document.getElementById('csvUploadText');
+    // Add or create a CSV confirmation badge
+    let csvConfirm = document.getElementById('csvConfirmBadge');
+    if (!csvConfirm) {
+      csvConfirm = document.createElement('div');
+      csvConfirm.id = 'csvConfirmBadge';
+      csvConfirm.style.fontSize = '13px';
+      csvConfirm.style.color = '#228B22';
+      csvConfirm.style.marginTop = '4px';
+      csvConfirm.style.display = 'none';
+      csvConfirm.style.alignItems = 'center';
+      csvConfirm.style.gap = '6px';
+      csvInput?.parentNode?.insertBefore(csvConfirm, csvInput.nextSibling);
+    }
 
     if (csvInput && status && text) {
       csvInput.addEventListener('change', async (e) => {
@@ -103,14 +116,20 @@ window.addEventListener('DOMContentLoaded', async () => {
             console.log('[DEBUG] Parsed posts from CSV:', posts);
             showNotification(`CSV file uploaded: ${file.name} (${posts.length} posts detected)`, 'success');
             text.textContent += ` (${posts.length} posts)`;
+            // Show confirmation badge
+            csvConfirm.innerHTML = `✔️ <strong>CSV attached:</strong> ${file.name} <span style='color:#888;'>(${posts.length} posts)</span>`;
+            csvConfirm.style.display = 'flex';
           } catch (err) {
             console.error('[DEBUG] Error parsing CSV file:', err);
             showNotification('Error parsing CSV file', 'error');
             text.textContent += ' (Error reading file)';
+            csvConfirm.innerHTML = `<span style='color:#b00;'>❌ CSV error</span>`;
+            csvConfirm.style.display = 'flex';
           }
         } else {
           text.textContent = '';
           status.style.opacity = '0';
+          csvConfirm.style.display = 'none';
         }
       });
     }
@@ -750,20 +769,28 @@ async function displayDefaultTimesInSidebar() {
     try {
       const snap = await getDoc(doc(db, 'default_times', profileId));
       if (snap.exists() && snap.data().time) {
-        labelSpan.textContent = `⏰ ${snap.data().time}`;
-        labelSpan.style.color = '#888';
-        labelSpan.style.fontSize = '12px';
+        // Format time as local time with AM/PM
+        const [hh, mm] = snap.data().time.split(':');
+        const date = new Date();
+        date.setHours(Number(hh), Number(mm), 0, 0);
+        const localTime = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        // Format days
+        const days = Array.isArray(snap.data().days) && snap.data().days.length > 0 ? ` (${snap.data().days.join(', ')})` : '';
+        labelSpan.textContent = `⏰ ${localTime}${days}`;
+        // Compact, inline style
+        labelSpan.style.color = '#222';
+        labelSpan.style.fontSize = '13px';
         labelSpan.style.marginLeft = '6px';
         labelSpan.style.verticalAlign = 'middle';
-        labelSpan.style.background = '#f3f3f3';
-        labelSpan.style.borderRadius = '8px';
-        labelSpan.style.padding = '2px 6px';
-        labelSpan.style.display = 'inline-block';
+        labelSpan.style.background = 'none';
+        labelSpan.style.borderRadius = '0';
+        labelSpan.style.padding = '0';
+        labelSpan.style.display = 'inline';
       } else {
         labelSpan.textContent = 'No default time';
         labelSpan.style.color = '#bbb';
-        labelSpan.style.background = 'transparent';
-        labelSpan.style.padding = '2px 0';
+        labelSpan.style.background = 'none';
+        labelSpan.style.padding = '0';
       }
     } catch (err) {
       labelSpan.textContent = '';
