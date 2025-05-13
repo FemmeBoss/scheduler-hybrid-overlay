@@ -149,6 +149,32 @@ async function renderPages(pages, containerId, platform) {
     `;
 
     container.appendChild(pageElement);
+
+    // --- Fetch and display default time/days in sidebar ---
+    const labelSpan = pageElement.querySelector('.default-time-label');
+    if (labelSpan) {
+      try {
+        const snap = await getDoc(doc(db, 'default_times', page.id));
+        if (snap.exists()) {
+          const { time = '', days = [] } = snap.data();
+          if (time) {
+            // Format as local time with AM/PM
+            const [h, m] = time.split(':');
+            const d = new Date();
+            d.setHours(Number(h), Number(m), 0, 0);
+            let local = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            let daysText = days.length ? ` (${days.join(', ')})` : '';
+            labelSpan.textContent = `⏰ ${local}${daysText}`;
+          } else {
+            labelSpan.textContent = '';
+          }
+        } else {
+          labelSpan.textContent = '';
+        }
+      } catch (err) {
+        labelSpan.textContent = '';
+      }
+    }
   }
 
   // Debug log the rendered pages
