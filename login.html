@@ -171,61 +171,49 @@
       letter-spacing: 0.5px;
       text-align: center;
     }
+    .script-black {
+      font-family: 'Dancing Script', cursive !important;
+      color: #111 !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px;
+    }
+    .crown-logo {
+      display: block;
+      margin: 0 auto 1.2rem auto;
+      max-width: 90px;
+      filter: drop-shadow(0 2px 8px #bfa14a22);
+    }
   </style>
 </head>
 <body>
-  <!-- YouTube Background -->
-  <div id="youtubeBackground"></div>
+  <!-- Video Background -->
+  <video autoplay loop muted playsinline id="bgVideo" style="
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    object-fit: cover;
+    z-index: -1;
+    pointer-events: none;
+  ">
+    <source src="https://res.cloudinary.com/drsopn5st/video/upload/v1747162839/Scheduler_Background_rezhkn.mp4" type="video/mp4">
+  </video>
 
   <div class="login-container">
-    <div class="login-title">Femme Boss Scheduler</div>
-    <div class="social-icons">
-      <img src="/icons/fb-icon.png" alt="Facebook" class="logo">
-      <img src="/icons/ig-icon.png" alt="Instagram" class="logo">
-    </div>
-    <div class="login-script">Welcome Back</div>
+    <img src="/icons/fb-crown-logo.png" alt="Femme Boss Logo" class="crown-logo" style="max-width: 90px; margin: 0 auto 1.2rem auto; display: block;" />
+    <div class="login-title script-black">Femme Boss Scheduler</div>
+    <div class="login-script script-black">Welcome Back</div>
     <form id="loginForm">
       <input type="text" id="username" placeholder="Admin Username" required />
       <input type="password" id="password" placeholder="Admin Password" required />
       <button type="submit">Admin Login</button>
       <div id="error" class="error"></div>
     </form>
+    <div class="social-icons" style="margin-top: 1.2rem;">
+      <img src="/icons/fb-icon.png" alt="Facebook" class="logo">
+      <img src="/icons/ig-icon.png" alt="Instagram" class="logo">
+    </div>
   </div>
 
   <script>
-    // YouTube API
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    var player;
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('youtubeBackground', {
-        videoId: 'i0hoTHyyWeQ',
-        playerVars: {
-          'autoplay': 1,
-          'controls': 0,
-          'showinfo': 0,
-          'mute': 1,
-          'loop': 1,
-          'playlist': 'i0hoTHyyWeQ',
-          'playsinline': 1,
-          'rel': 0,
-          'modestbranding': 1,
-          'iv_load_policy': 3
-        },
-        events: {
-          'onReady': onPlayerReady
-        }
-      });
-    }
-
-    function onPlayerReady(event) {
-      event.target.playVideo();
-      event.target.setPlaybackQuality('hd1080');
-    }
-
     console.log('Login page script starting...');
     
     // Wait for DOM to be fully loaded
