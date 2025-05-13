@@ -6,78 +6,142 @@
   <title>Femme Boss Social Scheduler - Login</title>
   <link rel="stylesheet" href="/style.css">
   <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      background: #fff;
+      background-image: url('data:image/svg+xml;utf8,<svg width="100%25" height="100%25" xmlns="http://www.w3.org/2000/svg"><rect fill="white" width="100%25" height="100%25"/><path d="M0 100 Q50 200 100 100 T200 100 T300 100 T400 100 T500 100 T600 100 T700 100 T800 100 T900 100 T1000 100" stroke="%23e5e5e5" stroke-width="2" fill="none"/><path d="M0 200 Q100 300 200 200 T400 200 T600 200 T800 200 T1000 200" stroke="%23f2f2f2" stroke-width="2" fill="none"/></svg>');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .login-container {
       max-width: 400px;
       margin: 80px auto;
-      background: #fff;
-      padding: 2rem 2.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.92);
+      padding: 2.5rem 2.5rem 2rem 2.5rem;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10), 0 1.5px 8px 0 rgba(191,161,74,0.10);
+      border: 2px solid #bfa14a;
+      backdrop-filter: blur(6px);
       text-align: center;
+      position: relative;
+    }
+    .login-container h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 2rem;
+      letter-spacing: -1px;
     }
     .login-container input {
       width: 100%;
-      padding: 0.7rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1.2rem;
+      border: 1.5px solid #e5e5e5;
+      border-radius: 7px;
+      font-size: 1.08rem;
+      background: #faf9f6;
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 4px 0 rgba(191,161,74,0.04);
+    }
+    .login-container input:focus {
+      border: 1.5px solid #bfa14a;
+      outline: none;
+      box-shadow: 0 0 0 2px #f7e7b0;
+      background: #fff;
     }
     .login-container button {
       width: 100%;
-      padding: 0.7rem;
-      background: #6366f1;
-      color: #fff;
+      padding: 0.8rem 0;
+      font-size: 1.08rem;
+      font-weight: 600;
+      border-radius: 7px;
       border: none;
-      border-radius: 4px;
-      font-size: 1rem;
+      margin-bottom: 1.1rem;
+      background: #111;
+      color: #fff;
+      letter-spacing: 0.2px;
+      box-shadow: 0 1px 6px 0 rgba(191,161,74,0.10);
       cursor: pointer;
-      transition: background 0.2s;
-      margin-bottom: 1rem;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
     .login-container button:hover {
-      background: #4f46e5;
+      background: linear-gradient(90deg, #bfa14a 0%, #f7e7b0 100%);
+      color: #111;
+      box-shadow: 0 2px 10px 0 rgba(191,161,74,0.18);
+    }
+    #loginBtn {
+      background: linear-gradient(90deg, #bfa14a 0%, #f7e7b0 100%);
+      color: #111;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 10px 0 rgba(191,161,74,0.18);
+      border: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    #loginBtn:hover {
+      background: #111;
+      color: #fff;
+      box-shadow: 0 2px 10px 0 rgba(191,161,74,0.18);
     }
     .error {
       color: #d8000c;
       margin-top: 0.5rem;
-      font-size: 0.95rem;
+      font-size: 0.98rem;
+      font-weight: 500;
+      letter-spacing: 0.1px;
     }
     .logo {
-      max-width: 100px;
-      margin-bottom: 2rem;
+      max-width: 60px;
+      margin-bottom: 1.2rem;
+      filter: drop-shadow(0 2px 8px #bfa14a22);
     }
     .social-icons {
       display: flex;
       justify-content: center;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
     }
     .social-icons img {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 1px 6px 0 rgba(191,161,74,0.10);
+      border: 1.5px solid #f7e7b0;
+      padding: 4px;
+      transition: box-shadow 0.2s, border 0.2s;
+    }
+    .social-icons img:hover {
+      box-shadow: 0 2px 12px 0 #bfa14a55;
+      border: 1.5px solid #bfa14a;
     }
     .divider {
-      margin: 1.5rem 0;
+      margin: 2rem 0 1.5rem 0;
       display: flex;
       align-items: center;
       text-align: center;
-      color: #666;
+      color: #bfa14a;
+      font-weight: 600;
+      font-size: 1.08rem;
+      letter-spacing: 0.2px;
     }
     .divider::before,
     .divider::after {
       content: '';
       flex: 1;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 2px solid #f7e7b0;
     }
     .divider span {
       padding: 0 1rem;
-    }
-    #loginBtn {
-      background: #1877f2;
-    }
-    #loginBtn:hover {
-      background: #166fe5;
+      color: #bfa14a;
     }
   </style>
 </head>
