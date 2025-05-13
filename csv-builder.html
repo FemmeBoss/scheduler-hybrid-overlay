@@ -178,6 +178,7 @@
             }
 
             const data = await res.json();
+            console.log(`Cloudinary upload response for file #${i + 1}:`, data);
             if (!data.secure_url) {
               alert(`Cloudinary response missing URL.`);
               status.textContent = "Upload failed.";
@@ -186,6 +187,7 @@
             }
 
             uploadedUrls.push(data.secure_url);
+            console.log(`Uploaded URL for file #${i + 1}:`, data.secure_url);
             await sleep(1000); // throttle protection
 
           } catch (err) {
@@ -196,6 +198,8 @@
           }
         }
 
+        console.log('All uploaded URLs:', uploadedUrls);
+
         status.textContent = "Generating CSV...";
 
         let csv = "File URL,Caption,Schedule Date\n";
@@ -205,6 +209,8 @@
           const date = `"${dates[i]}"`;
           csv += `${url},${caption},${date}\n`;
         }
+
+        console.log('Generated CSV content:\n' + csv);
 
         lastGeneratedCSV = csv;
         status.textContent = "Files uploaded successfully! Click 'Download CSV' to get your schedule.";
