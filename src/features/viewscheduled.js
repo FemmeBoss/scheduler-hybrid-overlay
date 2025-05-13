@@ -502,32 +502,27 @@ async function loadScheduledPosts() {
     const postsHTML = window.scheduledPosts.map(post => {
       const status = getPostStatus(post);
       const scheduledTime = new Date(post.scheduledTime || post.scheduleDate);
-      
       return `
-        <div class="scheduled-post" data-post-id="${post.id}">
-          <div class="post-header">
-            <div class="post-header-info">
-              <h3>${post.pageName || 'Unnamed Page'}</h3>
-              ${getStatusBadgeHTML(status)}
-            </div>
-            <div class="post-actions">
-              <button class="action-btn edit" onclick="window.openEditModal('${post.id}')" ${status === 'published' ? 'disabled' : ''}>
-                <i class="fas fa-edit"></i> Edit
-              </button>
-              <button class="action-btn delete" onclick="window.openDeleteModal('${post.id}')">
-                <i class="fas fa-trash"></i> Delete
-              </button>
-            </div>
+        <div class="scheduled-post" data-post-id="${post.id}" style="display: flex; align-items: flex-start; gap: 1.25rem; padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
+          <div class="scheduled-thumb" style="flex: 0 0 72px; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+            <img src="${post.imageUrl || 'assets/default-profile.png'}" alt="Post thumbnail" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.src='assets/default-profile.png'" />
           </div>
-          <div class="post-content">
-            <p class="post-caption">${post.caption || ''}</p>
-            <div class="post-meta">
-              <span class="scheduled-time">
-                <i class="far fa-clock"></i> ${scheduledTime.toLocaleString()}
-              </span>
-              <span class="platform-badge ${post.platform.toLowerCase()}">
-                <i class="fab fa-${post.platform.toLowerCase()}"></i> ${post.platform}
-              </span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <strong>${post.pageName || 'Unnamed Page'}</strong>
+                <span class="platform-badge ${post.platform}">${post.platform}</span>
+                ${getStatusBadgeHTML(status)}
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="action-btn edit" onclick="window.openEditModal('${post.id}')" ${status === 'published' ? 'disabled' : ''}>Edit</button>
+                <button class="action-btn delete" onclick="window.openDeleteModal('${post.id}')">Delete</button>
+              </div>
+            </div>
+            <div class="post-caption" style="margin: 0.5rem 0 0.25rem 0;">${post.caption || ''}</div>
+            <div class="post-meta" style="font-size: 0.95em; color: #666;">
+              <span class="scheduled-time"><i class="far fa-clock"></i> ${scheduledTime.toLocaleString()}</span>
+              <span class="platform-badge ${post.platform.toLowerCase()}"><i class="fab fa-${post.platform.toLowerCase()}"></i> ${post.platform}</span>
             </div>
           </div>
         </div>
