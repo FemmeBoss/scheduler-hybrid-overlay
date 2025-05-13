@@ -52,6 +52,8 @@
           <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label>
           <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
         </div>
+
+        <button id="generateCsvBtn" class="btn btn-primary" style="align-self: flex-end; height: 40px;">Generate CSV File</button>
       </div>
 
       <!-- Login Section -->
@@ -209,5 +211,25 @@
   </script>
   <script type="module" src="./src/main.js"></script>
   <script type="module" src="./src/core/igPublisher.js"></script>
+  <script>
+    document.getElementById('generateCsvBtn')?.addEventListener('click', function() {
+      // Example CSV content
+      const csvContent = [
+        ['Page Name', 'Caption', 'Schedule Date'],
+        ['Example Page', 'This is a caption', '2025-04-15 10:00 AM']
+      ].map(e => e.join(',')).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'scheduler-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
 </body>
 </html>
