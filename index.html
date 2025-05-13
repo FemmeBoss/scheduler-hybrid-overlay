@@ -254,6 +254,23 @@
         <button id="generateCsvBtn" class="btn-gold">Generate CSV File</button>
       </div>
 
+      <!-- Image URL Converter Section -->
+      <div class="image-url-converter-section">
+        <div class="csv-builder-title">Image URL Converter</div>
+        <div class="csv-builder-subtitle">Convert image URLs to a different format</div>
+        <div class="csv-builder-section">
+          <div class="form-section">
+            <label for="imageUrlInput"><strong>Enter Image URLs (one per line):</strong></label>
+            <textarea id="imageUrlInput" rows="6" placeholder="Enter image URLs here, one per line"></textarea>
+          </div>
+          <div class="form-section">
+            <label for="imageUrlOutput"><strong>Converted URLs:</strong></label>
+            <textarea id="imageUrlOutput" rows="6" placeholder="Converted URLs will appear here" readonly></textarea>
+          </div>
+        </div>
+        <button id="convertImageUrlBtn" class="btn-gold">Convert URLs</button>
+      </div>
+
       <!-- Login Section -->
       <div id="loginSection" style="display: none;">
         <p>Please log in to access the scheduler.</p>
@@ -408,14 +425,28 @@
   <script type="module" src="./src/main.js"></script>
   <script type="module" src="./src/core/igPublisher.js"></script>
   <script>
-    document.getElementById('generateCsvBtn')?.addEventListener('click', function() {
-      // Example CSV content
-      const csvContent = [
-        ['Page Name', 'Caption', 'Schedule Date'],
-        ['Example Page', 'This is a caption', '2025-04-15 10:00 AM']
-      ].map(e => e.join(',')).join('\n');
+    document.getElementById('generateCsvBtn').addEventListener('click', function() {
+      const imageInput = document.getElementById('imageInput');
+      const captions = document.getElementById('captions').value.split('\n').filter(caption => caption.trim() !== '');
+      const dates = document.getElementById('dates').value.split('\n').filter(date => date.trim() !== '');
 
-      const blob = new Blob([csvContent], { type: 'text/csv' });
+      if (imageInput.files.length === 0 || captions.length === 0 || dates.length === 0) {
+        alert('Please upload images, add captions, and schedule dates.');
+        return;
+      }
+
+      const csvContent = [];
+      csvContent.push(['Image URL', 'Caption', 'Schedule Date']);
+
+      for (let i = 0; i < imageInput.files.length; i++) {
+        const imageUrl = URL.createObjectURL(imageInput.files[i]);
+        const caption = captions[i] || '';
+        const date = dates[i] || '';
+        csvContent.push([imageUrl, caption, date]);
+      }
+
+      const csvString = csvContent.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
 
       const a = document.createElement('a');
@@ -425,6 +456,17 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    });
+
+    // Image URL Converter Logic
+    document.getElementById('convertImageUrlBtn').addEventListener('click', function() {
+      const input = document.getElementById('imageUrlInput').value;
+      const urls = input.split('\n').filter(url => url.trim() !== '');
+      const convertedUrls = urls.map(url => {
+        // Example conversion logic: replace 'http://' with 'https://'
+        return url.replace('http://', 'https://');
+      });
+      document.getElementById('imageUrlOutput').value = convertedUrls.join('\n');
     });
   </script>
 </body>
