@@ -5,6 +5,57 @@
   <title>CSV Bulk Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin: 10px 0;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+    .csv-builder-section {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+    .form-section {
+      flex: 1;
+    }
+    #fileTypeInfo {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #666;
+    }
+    #status {
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: #000;
+    }
+    #downloadBtn {
+      display: none;
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0.9;
+      transition: opacity 0.3s;
+    }
+    #downloadBtn:hover {
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
 
@@ -14,43 +65,171 @@
     <a href="/popup.html" class="btn-primary">Go to CSV Uploader</a>
   </div>
 
-  <div class="csv-builder-section" style="display: flex; gap: 1rem; margin-bottom: 2rem; width: 100%;">
-    <div class="form-section" style="flex: 1;">
-      <label for="imageInput"><strong>Upload Images (1-20):</strong></label>
-      <input type="file" id="imageInput" accept="image/*" multiple="">
+  <div class="csv-builder-section">
+    <div class="form-section">
+      <label for="imageInput"><strong>Upload Images/Videos (1-20):</strong></label>
+      <input type="file" id="imageInput" accept="image/*,video/*" multiple>
+      <div id="fileTypeInfo"></div>
     </div>
 
-    <div class="form-section" style="flex: 1;">
+    <div class="form-section">
       <label for="captions"><strong>Captions (one per line):</strong></label>
       <textarea id="captions" rows="6" placeholder="One caption per line..."></textarea>
     </div>
 
-    <div class="form-section" style="flex: 1;">
+    <div class="form-section">
       <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label>
       <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
     </div>
-
-    <button id="generateCsvBtn" class="btn-primary" style="align-self: flex-end; height: 40px;">Generate CSV File</button>
   </div>
 
+  <button id="processBtn" class="btn-primary">Process Files</button>
+  <button id="downloadBtn" class="btn-primary">Download CSV</button>
+
   <script>
-    document.getElementById('generateCsvBtn').addEventListener('click', function() {
-      // Example CSV content
-      const csvContent = [
-        ['Page Name', 'Caption', 'Schedule Date'],
-        ['Example Page', 'This is a caption', '2025-04-15 10:00 AM']
-      ].map(e => e.join(',')).join('\n');
+    document.addEventListener("DOMContentLoaded", () => {
+      const button = document.getElementById('processBtn');
+      const CLOUD_NAME = "drsopn5st";
+      const UPLOAD_PRESET = "femme_boss_uploads";
 
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
+      const status = document.createElement("div");
+      status.id = "status";
+      button.parentNode.insertBefore(status, button.nextSibling);
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'scheduler-template.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const downloadBtn = document.getElementById("downloadBtn");
+
+      const fileInput = document.getElementById('imageInput');
+      const fileTypeInfo = document.getElementById('fileTypeInfo');
+
+      fileInput.addEventListener('change', () => {
+        const files = fileInput.files;
+        if (files.length > 0) {
+          const imageCount = Array.from(files).filter(f => f.type.startsWith('image/')).length;
+          const videoCount = Array.from(files).filter(f => f.type.startsWith('video/')).length;
+          
+          let infoText = '';
+          if (imageCount > 0) infoText += `${imageCount} image${imageCount > 1 ? 's' : ''}`;
+          if (imageCount > 0 && videoCount > 0) infoText += ' and ';
+          if (videoCount > 0) infoText += `${videoCount} video${videoCount > 1 ? 's' : ''}`;
+          infoText += ' selected';
+          
+          fileTypeInfo.textContent = infoText;
+        } else {
+          fileTypeInfo.textContent = '';
+        }
+      });
+
+      const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+      let lastGeneratedCSV = null;
+
+      button.addEventListener('click', async () => {
+        const fileInput = document.getElementById('imageInput');
+        const captions = document.getElementById('captions').value.trim().split('\n');
+        const dates = document.getElementById('dates').value.trim().split('\n');
+        const fileCount = fileInput.files.length;
+
+        if (fileCount === 0 || fileCount > 20) {
+          return alert("Please upload between 1 and 20 files.");
+        }
+
+        if (captions.length < fileCount || dates.length < fileCount) {
+          return alert("Please provide a caption and schedule date for each file.");
+        }
+
+        button.disabled = true;
+        downloadBtn.style.display = "none";
+        status.textContent = "Uploading files...";
+
+        const uploadedUrls = [];
+
+        for (let i = 0; i < fileCount; i++) {
+          try {
+            status.textContent = `Uploading file ${i + 1} of ${fileCount}...`;
+
+            const file = fileInput.files[i];
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", UPLOAD_PRESET);
+
+            const isVideo = file.type.startsWith('video/');
+            const resourceType = isVideo ? 'video' : 'image';
+
+            let res;
+            try {
+              res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
+                method: "POST",
+                body: formData
+              });
+            } catch (networkError) {
+              alert("Network error uploading file: " + networkError.message);
+              status.textContent = "Upload failed due to network issue.";
+              button.disabled = false;
+              return;
+            }
+
+            const contentType = res.headers.get("content-type");
+            if (!res.ok || !contentType || !contentType.includes("application/json")) {
+              const errText = await res.text();
+              alert(`Cloudinary rejected upload. HTTP ${res.status}: ${errText}`);
+              status.textContent = "Upload failed.";
+              button.disabled = false;
+              return;
+            }
+
+            const data = await res.json();
+            console.log(`Cloudinary upload response for file #${i + 1}:`, data);
+            if (!data.secure_url) {
+              alert(`Cloudinary response missing URL.`);
+              status.textContent = "Upload failed.";
+              button.disabled = false;
+              return;
+            }
+
+            uploadedUrls.push(data.secure_url);
+            console.log(`Uploaded URL for file #${i + 1}:`, data.secure_url);
+            await sleep(1000); // throttle protection
+
+          } catch (err) {
+            alert(`Failed to upload file #${i + 1}: ${err.message}`);
+            status.textContent = "Upload error.";
+            button.disabled = false;
+            return;
+          }
+        }
+
+        console.log('All uploaded URLs:', uploadedUrls);
+
+        status.textContent = "Generating CSV...";
+
+        let csv = "File URL,Caption,Schedule Date\n";
+        for (let i = 0; i < fileCount; i++) {
+          const url = uploadedUrls[i];
+          const caption = `"${captions[i].replace(/"/g, '""')}"`;
+          const date = `"${dates[i]}"`;
+          csv += `${url},${caption},${date}\n`;
+        }
+
+        console.log('Generated CSV content:\n' + csv);
+
+        lastGeneratedCSV = csv;
+        status.textContent = "Files uploaded successfully! Click 'Download CSV' to get your schedule.";
+        button.disabled = false;
+        downloadBtn.style.display = "block";
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        if (!lastGeneratedCSV) {
+          alert("Please upload files first!");
+          return;
+        }
+
+        const blob = new Blob([lastGeneratedCSV], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "schedule.csv";
+        a.click();
+      });
     });
   </script>
 
