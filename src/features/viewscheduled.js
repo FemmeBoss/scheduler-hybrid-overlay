@@ -216,10 +216,21 @@ window.saveEdit = async function(postId) {
     const scheduledDate = new Date(scheduledTime);
     const scheduledUnix = Math.floor(scheduledDate.getTime() / 1000);
     
-    // Validate scheduled time is in the future
+    // Debug time information
+    console.log('Time Debug:', {
+      inputTime: scheduledTime,
+      parsedDate: scheduledDate.toISOString(),
+      scheduledUnix,
+      currentUnix: Math.floor(Date.now() / 1000),
+      difference: scheduledUnix - Math.floor(Date.now() / 1000)
+    });
+    
+    // Validate scheduled time is in the future (with 1 minute buffer)
     const now = Math.floor(Date.now() / 1000);
-    if (scheduledUnix <= now) {
-      throw new Error('Scheduled time must be in the future');
+    const oneMinuteFromNow = now + 60;
+    
+    if (scheduledUnix < oneMinuteFromNow) {
+      throw new Error('Scheduled time must be at least 1 minute in the future');
     }
 
     // Get the page access token from the checkbox data
