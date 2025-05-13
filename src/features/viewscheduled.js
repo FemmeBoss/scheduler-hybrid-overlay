@@ -175,7 +175,17 @@ window.openEditModal = async function(postId) {
 
     // Set current values
     captionInput.value = post.caption || '';
-    timeInput.value = new Date(post.scheduleDate).toISOString().slice(0, 16); // Format for datetime-local input
+    
+    // Preserve the original time without timezone conversion
+    const originalDate = new Date(post.scheduleDate);
+    const year = originalDate.getFullYear();
+    const month = String(originalDate.getMonth() + 1).padStart(2, '0');
+    const day = String(originalDate.getDate()).padStart(2, '0');
+    const hours = String(originalDate.getHours()).padStart(2, '0');
+    const minutes = String(originalDate.getMinutes()).padStart(2, '0');
+    
+    // Format as YYYY-MM-DDTHH:mm for datetime-local input
+    timeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 
     // Update save button click handler
     saveButton.onclick = () => window.saveEdit(postId);
@@ -222,7 +232,9 @@ window.saveEdit = async function(postId) {
       parsedDate: scheduledDate.toISOString(),
       scheduledUnix,
       currentUnix: Math.floor(Date.now() / 1000),
-      difference: scheduledUnix - Math.floor(Date.now() / 1000)
+      difference: scheduledUnix - Math.floor(Date.now() / 1000),
+      originalTime: post.scheduleDate,
+      newTime: scheduledDate.toISOString()
     });
     
     // Validate scheduled time is in the future (with 1 minute buffer)
