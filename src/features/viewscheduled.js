@@ -554,7 +554,6 @@ async function loadScheduledPosts() {
             <div class="post-caption" style="margin: 0.5rem 0 0.25rem 0;">${post.caption || ''}</div>
             <div class="post-meta" style="font-size: 0.95em; color: #666;">
               <span class="scheduled-time"><i class="far fa-clock"></i> ${scheduledTime.toLocaleString()}</span>
-              <span class="platform-badge ${post.platform.toLowerCase()}"><i class="fab fa-${post.platform.toLowerCase()}"></i> ${post.platform}</span>
             </div>
           </div>
         </div>
