@@ -360,7 +360,19 @@ body {
 }
 
 .platform-badge.instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #ffffff 100%);
+  background: linear-gradient(90deg, #f58529 0%, #dd2a7b 50%, #8134af 100%);
+  color: #fff !important;
+  padding: 0.25em 0.9em;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95em;
+  display: inline-flex;
+  align-items: center;
+  min-width: 80px;
+  max-width: 120px;
+  justify-content: center;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  letter-spacing: 0.02em;
 }
 
 /* Post Content */
@@ -819,8 +831,12 @@ h3 {
 }
 
 .platform-badge.instagram {
-  background-color: rgba(228, 64, 95, 0.1);
-  color: #e4405f;
+  background: linear-gradient(90deg, #f58529 0%, #dd2a7b 50%, #8134af 100%) !important;
+  color: #fff !important;
+  padding: 0.25em 0.9em !important;
+  min-width: 80px !important;
+  max-width: 120px !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.15) !important;
 }
 
 .post-actions {
