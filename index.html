@@ -529,7 +529,7 @@
 
         status.textContent = "Generating CSV...";
 
-        let csv = "File URL,Caption,Schedule Date\n";
+        let csv = "Image URL,Caption,Schedule Date\n";
         for (let i = 0; i < fileCount; i++) {
           const url = uploadedUrls[i];
           const caption = `"${captions[i].replace(/"/g, '""')}"`;
