@@ -7,6 +7,72 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="src/styles/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .csv-builder-section {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 2px 16px 0 rgba(0,0,0,0.04);
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+    }
+    .csv-builder-section .form-section {
+      background: #f8f9fb;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px 0 rgba(0,0,0,0.03);
+      padding: 1.2rem 1rem 1rem 1rem;
+      flex: 1 1 260px;
+      min-width: 240px;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0;
+    }
+    .csv-builder-section label {
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #222;
+    }
+    .csv-builder-section input[type="file"],
+    .csv-builder-section textarea {
+      margin-top: 0.3rem;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      padding: 0.5rem;
+      font-size: 1rem;
+      background: #fff;
+      resize: vertical;
+    }
+    .csv-builder-section textarea {
+      min-height: 80px;
+      max-height: 140px;
+    }
+    #generateCsvBtn {
+      margin-left: auto;
+      margin-top: 1.2rem;
+      min-width: 180px;
+      font-size: 1.05rem;
+      font-weight: 500;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+    }
+    @media (max-width: 900px) {
+      .csv-builder-section {
+        flex-direction: column;
+        gap: 1.2rem;
+        align-items: stretch;
+      }
+      #generateCsvBtn {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -37,23 +103,23 @@
       <h1 class="fancy-title">Femme Boss Scheduler</h1>
 
       <!-- CSV Builder Section -->
-      <div class="csv-builder-section" style="display: flex; gap: 1rem; margin-bottom: 2rem; width: 100%;">
-        <div class="form-section" style="flex: 1;">
+      <div class="csv-builder-section">
+        <div class="form-section">
           <label for="imageInput"><strong>Upload Images (1-20):</strong></label>
           <input type="file" id="imageInput" accept="image/*" multiple>
         </div>
 
-        <div class="form-section" style="flex: 1;">
+        <div class="form-section">
           <label for="captions"><strong>Captions (one per line):</strong></label>
           <textarea id="captions" rows="6" placeholder="One caption per line..."></textarea>
         </div>
 
-        <div class="form-section" style="flex: 1;">
+        <div class="form-section">
           <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label>
           <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
         </div>
 
-        <button id="generateCsvBtn" class="btn btn-primary" style="align-self: flex-end; height: 40px;">Generate CSV File</button>
+        <button id="generateCsvBtn" class="btn btn-primary">Generate CSV File</button>
       </div>
 
       <!-- Login Section -->
