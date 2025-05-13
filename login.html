@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Femme Boss Social Scheduler - Login</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Dancing+Script:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Cinzel:wght@700&family=Corinthia:wght@400;700&display=swap" rel="stylesheet">
   <style>
     #youtubeBackground {
       position: fixed;
@@ -183,6 +183,29 @@
       max-width: 90px;
       filter: drop-shadow(0 2px 8px #bfa14a22);
     }
+    .login-title.cinzel-lower {
+      font-family: 'Cinzel', serif !important;
+      color: #111 !important;
+      font-weight: 700 !important;
+      text-transform: lowercase !important;
+      font-size: clamp(2.2rem, 6vw, 3.5rem);
+      letter-spacing: 0.5px;
+      line-height: 1.05;
+      margin-bottom: 1.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .login-script.corinthia {
+      font-family: 'Corinthia', cursive !important;
+      color: #bfa14a;
+      font-size: 2.2rem;
+      font-weight: 400;
+      margin-bottom: 2.2rem;
+      letter-spacing: 0.5px;
+      text-align: center;
+      padding-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -199,8 +222,8 @@
 
   <div class="login-container">
     <img src="/icons/fb-crown-logo.png" alt="Femme Boss Logo" class="crown-logo" style="max-width: 90px; margin: 0 auto 1.2rem auto; display: block;" />
-    <div class="login-title script-black">Femme Boss Scheduler</div>
-    <div class="login-script script-black">Welcome Back</div>
+    <div class="login-title cinzel-lower">femme boss scheduler</div>
+    <div class="login-script corinthia">Welcome Back</div>
     <form id="loginForm">
       <input type="text" id="username" placeholder="Admin Username" required />
       <input type="password" id="password" placeholder="Admin Password" required />
