@@ -713,6 +713,9 @@ window.previewPosts = async function() {
   const container = document.getElementById('previewContainer');
   if (!container) return;
 
+  // Clear any previous error message before loading
+  container.innerHTML = '';
+
   const postFile = document.getElementById('postCsv')?.files?.[0];
   if (!postFile) {
     showNotification('Please upload a Post CSV file first', 'warning');
