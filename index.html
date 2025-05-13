@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body {
-      background: linear-gradient(120deg, #f7f8fa 0%, #f0f4fa 100%);
+      background: #f7f8fa;
     }
     .main-content-card {
       background: #fff;
-      border-radius: 24px;
-      box-shadow: 0 6px 32px 0 rgba(0,0,0,0.07);
-      padding: 3rem 2.5rem 2.5rem 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px 0 rgba(0,0,0,0.06);
+      padding: 2.5rem 2rem 2rem 2rem;
       max-width: 900px;
       margin: 2.5rem auto 3rem auto;
       display: flex;
@@ -33,33 +33,31 @@
     .csv-builder-subtitle {
       font-size: 1.1rem;
       color: #6b6b6b;
-      margin-bottom: 2.2rem;
+      margin-bottom: 2rem;
       text-align: center;
     }
     .csv-builder-section {
       display: flex;
-      gap: 2.2rem;
+      flex-direction: row;
+      gap: 1.5rem;
       width: 100%;
       justify-content: center;
       align-items: stretch;
-      margin-bottom: 2.2rem;
-      flex-wrap: wrap;
+      margin-bottom: 1.7rem;
+      flex-wrap: nowrap;
     }
     .csv-builder-section .form-section {
       background: #f8fafd;
-      border-radius: 16px;
-      box-shadow: 0 2px 12px 0 rgba(0,0,0,0.03);
-      padding: 1.5rem 1.2rem 1.2rem 1.2rem;
-      flex: 1 1 260px;
-      min-width: 240px;
-      max-width: 320px;
+      border-radius: 10px;
+      box-shadow: 0 1px 6px 0 rgba(0,0,0,0.02);
+      padding: 1.2rem 1rem 1rem 1rem;
+      flex: 1 1 0;
+      min-width: 180px;
+      max-width: 300px;
       display: flex;
       flex-direction: column;
-      height: 210px;
+      height: 180px;
       transition: box-shadow 0.2s;
-    }
-    .csv-builder-section .form-section:hover {
-      box-shadow: 0 4px 18px 0 rgba(0,0,0,0.07);
     }
     .csv-builder-section label {
       margin-bottom: 0.5rem;
@@ -69,49 +67,84 @@
     .csv-builder-section input[type="file"],
     .csv-builder-section textarea {
       margin-top: 0.3rem;
-      border-radius: 10px;
-      border: none;
-      background: #f3f6fa;
-      padding: 0.7rem 0.9rem;
-      font-size: 1.05rem;
+      border-radius: 7px;
+      border: 1px solid #e0e0e0;
+      background: #fff;
+      padding: 0.6rem 0.8rem;
+      font-size: 1.02rem;
       color: #222;
-      box-shadow: 0 1px 2px 0 rgba(0,0,0,0.01);
       outline: none;
       transition: box-shadow 0.2s, border 0.2s;
-    }
-    .csv-builder-section input[type="file"] {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      padding: 0.5rem;
     }
     .csv-builder-section textarea:focus {
       box-shadow: 0 0 0 2px #b3d4fc;
       border: 1px solid #b3d4fc;
     }
     .csv-builder-section textarea {
-      min-height: 80px;
-      max-height: 120px;
+      min-height: 60px;
+      max-height: 100px;
       resize: vertical;
     }
     #generateCsvBtn {
       display: block;
-      margin: 2.2rem auto 0 auto;
-      min-width: 220px;
-      font-size: 1.15rem;
+      margin: 1.7rem auto 0 auto;
+      min-width: 200px;
+      font-size: 1.08rem;
       font-weight: 600;
-      border-radius: 12px;
-      padding: 0.95rem 0;
-      background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+      border-radius: 8px;
+      padding: 0.85rem 0;
+      background: #23272f;
       color: #fff;
       border: none;
-      box-shadow: 0 2px 12px 0 rgba(252,92,125,0.08);
-      letter-spacing: 0.5px;
+      box-shadow: 0 1px 6px 0 rgba(0,0,0,0.06);
+      letter-spacing: 0.2px;
       transition: background 0.2s, box-shadow 0.2s;
       cursor: pointer;
     }
     #generateCsvBtn:hover {
-      background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
-      box-shadow: 0 4px 18px 0 rgba(252,92,125,0.13);
+      background: #11131a;
+      box-shadow: 0 2px 10px 0 rgba(35,39,47,0.10);
+    }
+    /* Page Groups Section */
+    .page-groups-wrapper {
+      background: #f8fafd;
+      border-radius: 10px;
+      box-shadow: 0 1px 6px 0 rgba(0,0,0,0.02);
+      padding: 1.2rem 1rem 1rem 1rem;
+      margin-bottom: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .page-groups-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.7rem;
+    }
+    #groupSelect, #groupNameInput {
+      min-width: 180px;
+      border-radius: 7px;
+      border: 1px solid #e0e0e0;
+      background: #fff;
+      padding: 0.5rem 0.8rem;
+      font-size: 1.01rem;
+      color: #222;
+      outline: none;
+      transition: box-shadow 0.2s, border 0.2s;
+    }
+    .group-action-buttons button, #saveGroupBtn {
+      min-width: 110px;
+      border-radius: 7px;
+      font-size: 1.01rem;
+      font-weight: 500;
+      padding: 0.5rem 0;
+      border: none;
+      background: #23272f;
+      color: #fff;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .group-action-buttons button:hover, #saveGroupBtn:hover {
+      background: #11131a;
     }
     @media (max-width: 900px) {
       .main-content-card {
@@ -125,6 +158,11 @@
       #generateCsvBtn {
         width: 100%;
         margin-left: 0;
+      }
+      .page-groups-row {
+        flex-direction: column;
+        gap: 0.7rem;
+        align-items: stretch;
       }
     }
   </style>
@@ -191,8 +229,6 @@
               <button id="editGroupBtn" class="btn btn-secondary">Edit Group</button>
               <button id="deleteGroupBtn" class="btn btn-secondary" style="font-weight: bold;">Delete Group</button>
             </div>
-          </div>
-          <div class="page-groups-row">
             <input type="text" id="groupNameInput" placeholder="Group name" />
             <button id="saveGroupBtn" class="btn btn-primary">Save Group</button>
           </div>
