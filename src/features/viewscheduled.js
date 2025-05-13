@@ -211,7 +211,16 @@ window.saveEdit = async function(postId) {
     }
 
     const post = postSnap.data();
-    const scheduledUnix = Math.floor(new Date(scheduledTime).getTime() / 1000);
+    
+    // Convert scheduled time to Unix timestamp (seconds)
+    const scheduledDate = new Date(scheduledTime);
+    const scheduledUnix = Math.floor(scheduledDate.getTime() / 1000);
+    
+    // Validate scheduled time is in the future
+    const now = Math.floor(Date.now() / 1000);
+    if (scheduledUnix <= now) {
+      throw new Error('Scheduled time must be in the future');
+    }
 
     // Get the page access token from the checkbox data
     const pageCheckbox = document.querySelector(`.page-checkbox[data-id="${post.pageId}"]`);
