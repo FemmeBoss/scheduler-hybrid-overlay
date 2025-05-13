@@ -7,29 +7,38 @@
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Dancing+Script:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    #youtubeBackground {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+    }
     body {
       min-height: 100vh;
       margin: 0;
       padding: 0;
       font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-      background: #fff;
-      background-image: url('data:image/svg+xml;utf8,<svg width="100%25" height="100%25" xmlns="http://www.w3.org/2000/svg"><rect fill="white" width="100%25" height="100%25"/><path d="M0 100 Q50 200 100 100 T200 100 T300 100 T400 100 T500 100 T600 100 T700 100 T800 100 T900 100 T1000 100" stroke="%23e5e5e5" stroke-width="2" fill="none"/><path d="M0 200 Q100 300 200 200 T400 200 T600 200 T800 200 T1000 200" stroke="%23f2f2f2" stroke-width="2" fill="none"/></svg>');
+      background: transparent;
       background-size: cover;
       background-repeat: no-repeat;
       background-attachment: fixed;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
     }
     .login-container {
       max-width: 400px;
       margin: 80px auto;
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.98);
       padding: 2.5rem 2.5rem 2rem 2.5rem;
       border-radius: 18px;
       box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10), 0 1.5px 8px 0 rgba(191,161,74,0.10);
       border: 2px solid #bfa14a;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
       text-align: center;
       position: relative;
     }
@@ -165,6 +174,9 @@
   </style>
 </head>
 <body>
+  <!-- YouTube Background -->
+  <div id="youtubeBackground"></div>
+
   <div class="login-container">
     <div class="login-title">Femme Boss Scheduler</div>
     <div class="social-icons">
@@ -181,6 +193,39 @@
   </div>
 
   <script>
+    // YouTube API
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('youtubeBackground', {
+        videoId: 'i0hoTHyyWeQ',
+        playerVars: {
+          'autoplay': 1,
+          'controls': 0,
+          'showinfo': 0,
+          'mute': 1,
+          'loop': 1,
+          'playlist': 'i0hoTHyyWeQ',
+          'playsinline': 1,
+          'rel': 0,
+          'modestbranding': 1,
+          'iv_load_policy': 3
+        },
+        events: {
+          'onReady': onPlayerReady
+        }
+      });
+    }
+
+    function onPlayerReady(event) {
+      event.target.playVideo();
+      event.target.setPlaybackQuality('hd1080');
+    }
+
     console.log('Login page script starting...');
     
     // Wait for DOM to be fully loaded
