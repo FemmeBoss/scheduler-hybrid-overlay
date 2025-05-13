@@ -503,8 +503,8 @@ async function loadScheduledPosts() {
       const status = getPostStatus(post);
       const scheduledTime = new Date(post.scheduledTime || post.scheduleDate);
       return `
-        <div class="scheduled-post" data-post-id="${post.id}" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
-          <div class="scheduled-thumb" style="flex: 0 0 150px; width: 150px; height: 150px; border-radius: 8px; overflow: hidden; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+        <div class="scheduled-post" data-post-id="${post.id}" style="display: flex; flex-direction: row; align-items: stretch; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
+          <div class="scheduled-thumb" style="flex: 0 0 120px; width: 120px; height: 150px; border-radius: 8px; overflow: hidden; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
             <img src="${post.imageUrl || 'assets/default-profile.png'}" alt="Post thumbnail" style="width: 100%; height: 100%; object-fit: cover; object-position: center; border-radius: 8px;" onerror="this.src='assets/default-profile.png'" />
           </div>
           <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
