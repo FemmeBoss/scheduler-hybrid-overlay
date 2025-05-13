@@ -1033,8 +1033,83 @@ window.addEventListener('save-time-settings', async (event) => {
     // Close the modal
     const modal = document.getElementById('timeModal');
     if (modal) modal.style.display = 'none';
+    // Update sidebar badge immediately
+    if (window.displayDefaultTimesInSidebar) window.displayDefaultTimesInSidebar();
   } catch (error) {
     console.error('Error saving time settings:', error);
     showNotification('Failed to save time settings', 'error');
+  }
+});
+
+// --- Fix: pre-fill modal with saved time and days ---
+window.openTimeModal = async function(pageId, pageName) {
+  const modal = document.getElementById('timeModal');
+  const title = document.getElementById('modalTitle');
+  const saveBtn = document.getElementById('saveTimeBtn');
+  if (!modal || !title || !saveBtn) return;
+  modal.style.display = 'block';
+  title.innerText = `Set Times for ${pageName}`;
+  // Pre-fill saved time and days
+  try {
+    const snap = await getDoc(doc(db, 'default_times', pageId));
+    if (snap.exists()) {
+      const { days = [], time = '' } = snap.data();
+      document.getElementById('modalTime').value = time;
+      document.querySelectorAll('.weekday-checkbox').forEach(cb => {
+        cb.checked = days.includes(cb.value);
+      });
+    } else {
+      document.getElementById('modalTime').value = '';
+      document.querySelectorAll('.weekday-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+    }
+  } catch (err) {
+    document.getElementById('modalTime').value = '';
+    document.querySelectorAll('.weekday-checkbox').forEach(cb => {
+      cb.checked = false;
+    });
+  }
+  saveBtn.onclick = () => {
+    const selectedDays = Array.from(document.querySelectorAll('.weekday-checkbox:checked')).map(cb => cb.value);
+    const selectedTime = document.getElementById('modalTime').value;
+    window.dispatchEvent(new CustomEvent('save-time-settings', {
+      detail: { pageId, selectedDays, selectedTime }
+    }));
+    modal.style.display = 'none';
+  };
+};
+
+// --- CSV confirmation fix ---
+window.addEventListener('DOMContentLoaded', () => {
+  const csvInput = document.getElementById('postCsv');
+  let csvConfirm = document.getElementById('csvConfirmBadge');
+  if (!csvConfirm) {
+    csvConfirm = document.createElement('div');
+    csvConfirm.id = 'csvConfirmBadge';
+    csvConfirm.style.fontSize = '13px';
+    csvConfirm.style.color = '#228B22';
+    csvConfirm.style.marginTop = '4px';
+    csvConfirm.style.display = 'none';
+    csvConfirm.style.alignItems = 'center';
+    csvConfirm.style.gap = '6px';
+    csvInput?.parentNode?.insertBefore(csvConfirm, csvInput.nextSibling);
+  }
+  if (csvInput) {
+    csvInput.addEventListener('change', async (e) => {
+      if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        try {
+          const posts = await parseCsv(file);
+          csvConfirm.innerHTML = `✔️ <strong>CSV attached:</strong> ${file.name} <span style='color:#888;'>(${posts.length} posts)</span>`;
+          csvConfirm.style.display = 'flex';
+        } catch (err) {
+          csvConfirm.innerHTML = `<span style='color:#b00;'>❌ CSV error</span>`;
+          csvConfirm.style.display = 'flex';
+        }
+      } else {
+        csvConfirm.style.display = 'none';
+      }
+    });
   }
 });
