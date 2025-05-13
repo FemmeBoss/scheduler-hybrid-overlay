@@ -344,35 +344,27 @@ body {
 }
 
 /* Platform Badge */
-.platform-badge {
+.platform-badge, .badge {
+  font-size: 0.85em;
+  padding: 0.18em 0.7em;
+  border-radius: 999px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: white;
+  vertical-align: middle;
+  margin-left: 0.5em;
+  margin-right: 0.1em;
+  height: 1.7em;
 }
 
 .platform-badge.facebook {
   background: #1877f2;
+  color: #fff;
 }
 
 .platform-badge.instagram {
   background: linear-gradient(90deg, #f58529 0%, #dd2a7b 50%, #8134af 100%);
-  color: #fff !important;
-  padding: 0.25em 0.9em;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.95em;
-  display: inline-flex;
-  align-items: center;
-  min-width: 80px;
-  max-width: 120px;
-  justify-content: center;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  letter-spacing: 0.02em;
+  color: #fff;
 }
 
 /* Post Content */

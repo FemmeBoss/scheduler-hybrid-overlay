@@ -541,7 +541,7 @@ async function loadScheduledPosts() {
           </div>
           <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div>
+              <div style="display: flex; align-items: center; gap: 0.5em;">
                 <strong>${post.pageName || 'Unnamed Page'}</strong>
                 <span class="platform-badge ${post.platform}">${post.platform}</span>
                 ${getStatusBadgeHTML(status)}
