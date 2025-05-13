@@ -8,60 +8,115 @@
   <link rel="stylesheet" href="src/styles/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    body {
+      background: linear-gradient(120deg, #f7f8fa 0%, #f0f4fa 100%);
+    }
+    .main-content-card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 6px 32px 0 rgba(0,0,0,0.07);
+      padding: 3rem 2.5rem 2.5rem 2.5rem;
+      max-width: 900px;
+      margin: 2.5rem auto 3rem auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .csv-builder-title {
+      font-size: 2.1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      letter-spacing: -1px;
+      color: #1a1a1a;
+      text-align: center;
+    }
+    .csv-builder-subtitle {
+      font-size: 1.1rem;
+      color: #6b6b6b;
+      margin-bottom: 2.2rem;
+      text-align: center;
+    }
     .csv-builder-section {
       display: flex;
-      gap: 2rem;
-      margin-bottom: 2rem;
+      gap: 2.2rem;
       width: 100%;
       justify-content: center;
-      align-items: flex-start;
+      align-items: stretch;
+      margin-bottom: 2.2rem;
       flex-wrap: wrap;
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 2px 16px 0 rgba(0,0,0,0.04);
-      padding: 2rem 1.5rem 1.5rem 1.5rem;
     }
     .csv-builder-section .form-section {
-      background: #f8f9fb;
-      border-radius: 12px;
-      box-shadow: 0 1px 6px 0 rgba(0,0,0,0.03);
-      padding: 1.2rem 1rem 1rem 1rem;
+      background: #f8fafd;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px 0 rgba(0,0,0,0.03);
+      padding: 1.5rem 1.2rem 1.2rem 1.2rem;
       flex: 1 1 260px;
       min-width: 240px;
       max-width: 320px;
       display: flex;
       flex-direction: column;
-      margin-bottom: 0;
+      height: 210px;
+      transition: box-shadow 0.2s;
+    }
+    .csv-builder-section .form-section:hover {
+      box-shadow: 0 4px 18px 0 rgba(0,0,0,0.07);
     }
     .csv-builder-section label {
       margin-bottom: 0.5rem;
-      font-weight: 500;
+      font-weight: 600;
       color: #222;
     }
     .csv-builder-section input[type="file"],
     .csv-builder-section textarea {
       margin-top: 0.3rem;
-      border-radius: 8px;
+      border-radius: 10px;
+      border: none;
+      background: #f3f6fa;
+      padding: 0.7rem 0.9rem;
+      font-size: 1.05rem;
+      color: #222;
+      box-shadow: 0 1px 2px 0 rgba(0,0,0,0.01);
+      outline: none;
+      transition: box-shadow 0.2s, border 0.2s;
+    }
+    .csv-builder-section input[type="file"] {
+      background: #fff;
       border: 1px solid #e0e0e0;
       padding: 0.5rem;
-      font-size: 1rem;
-      background: #fff;
-      resize: vertical;
+    }
+    .csv-builder-section textarea:focus {
+      box-shadow: 0 0 0 2px #b3d4fc;
+      border: 1px solid #b3d4fc;
     }
     .csv-builder-section textarea {
       min-height: 80px;
-      max-height: 140px;
+      max-height: 120px;
+      resize: vertical;
     }
     #generateCsvBtn {
-      margin-left: auto;
-      margin-top: 1.2rem;
-      min-width: 180px;
-      font-size: 1.05rem;
-      font-weight: 500;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+      display: block;
+      margin: 2.2rem auto 0 auto;
+      min-width: 220px;
+      font-size: 1.15rem;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 0.95rem 0;
+      background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+      color: #fff;
+      border: none;
+      box-shadow: 0 2px 12px 0 rgba(252,92,125,0.08);
+      letter-spacing: 0.5px;
+      transition: background 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    #generateCsvBtn:hover {
+      background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
+      box-shadow: 0 4px 18px 0 rgba(252,92,125,0.13);
     }
     @media (max-width: 900px) {
+      .main-content-card {
+        padding: 1.2rem 0.5rem;
+      }
       .csv-builder-section {
         flex-direction: column;
         gap: 1.2rem;
@@ -100,25 +155,23 @@
 
     <!-- 🧠 Central Content Area -->
     <div id="content">
-      <h1 class="fancy-title">Femme Boss Scheduler</h1>
-
-      <!-- CSV Builder Section -->
-      <div class="csv-builder-section">
-        <div class="form-section">
-          <label for="imageInput"><strong>Upload Images (1-20):</strong></label>
-          <input type="file" id="imageInput" accept="image/*" multiple>
+      <div class="main-content-card">
+        <div class="csv-builder-title">Femme Boss Scheduler</div>
+        <div class="csv-builder-subtitle">Bulk upload your images, captions, and schedule dates. Download a CSV template or generate your own below.</div>
+        <div class="csv-builder-section">
+          <div class="form-section">
+            <label for="imageInput"><strong>Upload Images (1-20):</strong></label>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+          </div>
+          <div class="form-section">
+            <label for="captions"><strong>Captions (one per line):</strong></label>
+            <textarea id="captions" rows="6" placeholder="One caption per line..."></textarea>
+          </div>
+          <div class="form-section">
+            <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label>
+            <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
+          </div>
         </div>
-
-        <div class="form-section">
-          <label for="captions"><strong>Captions (one per line):</strong></label>
-          <textarea id="captions" rows="6" placeholder="One caption per line..."></textarea>
-        </div>
-
-        <div class="form-section">
-          <label for="dates"><strong>Schedule Dates (ISO, one per line):</strong></label>
-          <textarea id="dates" rows="6" placeholder="One schedule date per line... Example: 2025-04-15 10:00 AM"></textarea>
-        </div>
-
         <button id="generateCsvBtn" class="btn btn-primary">Generate CSV File</button>
       </div>
 
