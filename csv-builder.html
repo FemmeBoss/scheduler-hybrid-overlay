@@ -14,5 +14,30 @@
     <a href="/popup.html" class="btn-primary">Go to CSV Uploader</a>
   </div>
 
+  <div>
+    <button id="generateCsvBtn" class="btn-primary">Generate CSV File</button>
+  </div>
+
+  <script>
+    document.getElementById('generateCsvBtn').addEventListener('click', function() {
+      // Example CSV content
+      const csvContent = [
+        ['Page Name', 'Caption', 'Schedule Date'],
+        ['Example Page', 'This is a caption', '2025-04-15 10:00 AM']
+      ].map(e => e.join(',')).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'scheduler-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
+
 </body>
 </html>
