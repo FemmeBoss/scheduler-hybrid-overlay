@@ -503,11 +503,11 @@ async function loadScheduledPosts() {
       const status = getPostStatus(post);
       const scheduledTime = new Date(post.scheduledTime || post.scheduleDate);
       return `
-        <div class="scheduled-post" data-post-id="${post.id}" style="display: flex; align-items: flex-start; gap: 1.25rem; padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
-          <div class="scheduled-thumb" style="flex: 0 0 72px; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-            <img src="${post.imageUrl || 'assets/default-profile.png'}" alt="Post thumbnail" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.src='assets/default-profile.png'" />
+        <div class="scheduled-post" data-post-id="${post.id}" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid #f0f0f0;">
+          <div class="scheduled-thumb" style="flex: 0 0 150px; width: 150px; height: 150px; border-radius: 8px; overflow: hidden; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+            <img src="${post.imageUrl || 'assets/default-profile.png'}" alt="Post thumbnail" style="width: 100%; height: 100%; object-fit: cover; object-position: center; border-radius: 8px;" onerror="this.src='assets/default-profile.png'" />
           </div>
-          <div style="flex: 1; min-width: 0;">
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
             <div style="display: flex; align-items: center; justify-content: space-between;">
               <div>
                 <strong>${post.pageName || 'Unnamed Page'}</strong>
