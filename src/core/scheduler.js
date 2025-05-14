@@ -155,6 +155,7 @@ async function handlePreview() {
         // If scheduleDate is missing time, apply default time
         let scheduleDate = post.scheduleDate;
         const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+        const dateTimePattern = /^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2} [AP]M$/;
         
         // First check if scheduleDate is a valid date string
         if (scheduleDate && typeof scheduleDate === 'string') {
@@ -167,6 +168,29 @@ async function handlePreview() {
                 const [h, m] = defaultTime.split(':');
                 baseDate.setHours(Number(h), Number(m), 0, 0);
               }
+              scheduleDate = baseDate.toISOString();
+            } else {
+              console.warn(`Invalid date values: ${scheduleDate}, using current date`);
+              const baseDate = new Date();
+              if (defaultTime) {
+                const [h, m] = defaultTime.split(':');
+                baseDate.setHours(Number(h), Number(m), 0, 0);
+              }
+              scheduleDate = baseDate.toISOString();
+            }
+          } else if (dateTimePattern.test(scheduleDate)) {
+            // Handle YYYY-MM-DD HH:MM AM/PM format
+            const [datePart, timePart] = scheduleDate.split(' ');
+            const [year, month, day] = datePart.split('-');
+            const [time, period] = timePart.split(' ');
+            const [hours, minutes] = time.split(':');
+            
+            let hour = parseInt(hours, 10);
+            if (period === 'PM' && hour < 12) hour += 12;
+            if (period === 'AM' && hour === 12) hour = 0;
+            
+            const baseDate = new Date(year, month - 1, day, hour, parseInt(minutes, 10));
+            if (!isNaN(baseDate.getTime())) {
               scheduleDate = baseDate.toISOString();
             } else {
               console.warn(`Invalid date values: ${scheduleDate}, using current date`);
