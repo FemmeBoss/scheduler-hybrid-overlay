@@ -488,10 +488,12 @@ async function parseCsv(file) {
   
   return dataRows.map(line => {
     const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    // Only parse date from column C (index 2), ignore any date-like content in other columns
+    const scheduleDate = values[2] || '';
     return {
       imageUrl: values[0] || '',      // Column A: Image URL
       caption: values[1] || '',       // Column B: Caption and hashtags
-      scheduleDate: values[2] || ''   // Column C: Date
+      scheduleDate                   // Column C: Date (only column we parse for dates)
     };
   });
 }
