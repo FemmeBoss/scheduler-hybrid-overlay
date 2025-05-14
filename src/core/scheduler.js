@@ -132,11 +132,10 @@ async function handlePreview() {
           continue;
         }
 
-        // Only show preview if watermark exists
+        // Get watermark for the page (but don't require it)
         const watermarkUrl = await getWatermark(pageData.id);
         if (!watermarkUrl) {
-          console.warn(`[WARNING] No watermark for page ${pageData.name}, skipping preview.`);
-          continue;
+          console.log(`[INFO] No watermark for page ${pageData.name}, will preview without watermark.`);
         }
 
         // Fetch default time for this page
@@ -167,6 +166,7 @@ async function handlePreview() {
           // Parse defaultTime (HH:mm)
           const [h, m] = defaultTime.split(':');
           baseDate.setHours(Number(h), Number(m), 0, 0);
+          // Store the date in ISO format but preserve the local time
           scheduleDate = baseDate.toISOString();
         }
 
@@ -234,7 +234,9 @@ async function handleSchedule() {
         continue;
       }
 
-      let scheduledUnix = Math.floor(new Date(scheduleDate).getTime() / 1000);
+      // Convert the schedule date to a Unix timestamp, preserving the local time
+      const scheduledDate = new Date(scheduleDate);
+      let scheduledUnix = Math.floor(scheduledDate.getTime() / 1000);
       const nowUnix = Math.floor(Date.now() / 1000);
 
       // Ensure minimum scheduling time is 20 minutes from now
@@ -272,13 +274,13 @@ async function handleSchedule() {
           scheduledResponse = await postToFacebook(pageId, formData, scheduledUnix);
           if (scheduledResponse && scheduledResponse.id) {
             scheduledPostId = scheduledResponse.id;
-            console.log(`[FB] Successfully scheduled post ${scheduledPostId} for ${new Date(scheduledUnix * 1000)}`);
+            console.log(`[FB] Successfully scheduled post ${scheduledPostId} for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}`);
           } else {
             throw new Error('No post ID returned from Facebook');
           }
         } else {
           // Instagram scheduling
-          console.log(`[IG] Starting upload for ${pageName} scheduled for ${new Date(scheduledUnix * 1000)}`);
+          console.log(`[IG] Starting upload for ${pageName} scheduled for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}`);
           creationId = await uploadToInstagram(pageId, page.pageAccessToken, finalImageUrl, caption);
           if (!creationId) {
             throw new Error('Failed to create Instagram container');
@@ -325,7 +327,7 @@ async function handleSchedule() {
 
           // Update local state
           scheduledPosts.push({ ...scheduledPost, id: scheduledPostRef.id });
-          statusEl.innerHTML += `✅ Scheduled: ${pageName} for ${new Date(scheduledUnix * 1000).toLocaleString()}<br>`;
+          statusEl.innerHTML += `✅ Scheduled: ${pageName} for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}<br>`;
         });
 
       } catch (err) {
@@ -505,6 +507,7 @@ async function safeAddDoc(collectionPath, data) {
 // Make preview and schedule handlers globally accessible to main.js
 window.handlePreview = handlePreview;
 window.handleSchedule = handleSchedule;
+window.renderPreviewCard = renderPreviewCard;
 
 window.addEventListener('online', () => {
   processPendingWrites(db);
@@ -519,10 +522,11 @@ async function renderPreviewCard(page, post) {
 
     const { imageUrl, caption, scheduleDate, _defaultTime, _defaultDays } = post;
 
-    // Get watermark for the page (already checked in handlePreview)
+    // Get watermark for the page (but don't require it)
     const watermarkUrl = await getWatermark(page.id);
-    if (!watermarkUrl) return null;
-    console.log(`[DEBUG] Watermark for ${page.name}:`, watermarkUrl);
+    if (!watermarkUrl) {
+      console.log(`[INFO] No watermark for page ${page.name}, will preview without watermark.`);
+    }
 
     // Create preview card
     const card = document.createElement('div');
@@ -531,17 +535,18 @@ async function renderPreviewCard(page, post) {
     // Default profile image as data URL
     const defaultProfileImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiNFNUU3RUIiLz48cGF0aCBkPSJNMjQgMjBDMjYuMjA5MSAyMCAyOCAxOC4yMDkxIDI4IDE2QzI4IDEzLjc5MDkgMjYuMjA5MSAxMiAyNCAxMkMyMS43OTA5IDEyIDIwIDEzLjc5MDkgMjAgMTZDMjAgMTguMjA5MSAyMS43OTA5IDIwIDI0IDIwWiIgZmlsbD0iIzk0OTk5RiIvPjxwYXRoIGQ9Ik0zMiAyOEMzMiAyNS43OTAxIDI4LjQxODMgMjQgMjQgMjRDMjAuNDE4MyAyNCAxNiAyNS43OTAxIDE2IDI4VjMySDMyVjI4WiIgZmlsbD0iIzk0OTk5RiIvPjwvc3ZnPg==';
 
-    // Format the schedule date
+    // Format the schedule date in user's local timezone
     let formattedDate = '';
     if (scheduleDate) {
       const d = new Date(scheduleDate);
-      formattedDate = d.toLocaleString('en-US', {
+      formattedDate = d.toLocaleString(undefined, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
+        timeZoneName: 'short'
       }).replace(',', '');
     }
 
@@ -551,7 +556,7 @@ async function renderPreviewCard(page, post) {
       daysText = ` (${_defaultDays.join(', ')})`;
     }
 
-    // Apply watermark to image
+    // Apply watermark to image if available
     let finalImageUrl = imageUrl;
     if (watermarkUrl) {
       try {
@@ -570,7 +575,9 @@ async function renderPreviewCard(page, post) {
         <div class="preview-info">
           <div class="preview-name">${page.name}</div>
           <div class="preview-platform">${page.platform}</div>
-          <div class="watermark-status has-watermark">✓ Watermark Uploaded</div>
+          <div class="watermark-status ${watermarkUrl ? 'has-watermark' : 'no-watermark'}">
+            ${watermarkUrl ? '✓ Watermark Uploaded' : '⚠️ No Watermark'}
+          </div>
         </div>
       </div>
       <div class="preview-image-container">
@@ -768,16 +775,23 @@ function parseUserDate(input) {
   return null;
 }
 
-// Patch: When reading schedule dates, use parseUserDate
-function getScheduleDatesFromTextarea() {
-  const textarea = document.getElementById('dates');
-  if (!textarea) return [];
-  const lines = textarea.value.split('\n').map(l => l.trim()).filter(Boolean);
-  const parsed = lines.map(line => parseUserDate(line));
-  const invalid = parsed.findIndex(d => !d);
-  if (invalid !== -1) {
-    alert(`Invalid date format on line ${invalid + 1}: "${lines[invalid]}".\nPlease use e.g. 2025-04-15 10:00 AM or 2025-04-15T10:00`);
-    return [];
-  }
-  return parsed;
+// Helper: Format date for display in user's timezone
+function formatDateForDisplay(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short'
+  }).replace(',', '');
+}
+
+// Helper: Format date for datetime-local input
+function formatDateForInput(dateString) {
+  const date = new Date(dateString);
+  const pad = n => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
