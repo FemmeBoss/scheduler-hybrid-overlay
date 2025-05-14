@@ -155,33 +155,52 @@ async function handlePreview() {
         // If scheduleDate is missing time, apply default time
         let scheduleDate = post.scheduleDate;
         const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-        if ((!scheduleDate || dateOnlyPattern.test(scheduleDate)) && defaultTime) {
-          let baseDate;
-          if (scheduleDate && dateOnlyPattern.test(scheduleDate)) {
+        
+        // First check if scheduleDate is a valid date string
+        if (scheduleDate && typeof scheduleDate === 'string') {
+          if (dateOnlyPattern.test(scheduleDate)) {
+            // Handle MM/DD/YYYY format
             const [month, day, year] = scheduleDate.split('/');
-            baseDate = new Date(year, month - 1, day);
-          } else {
-            baseDate = new Date();
-          }
-          // Parse defaultTime (HH:mm)
-          const [h, m] = defaultTime.split(':');
-          baseDate.setHours(Number(h), Number(m), 0, 0);
-          // Store the date in ISO format but preserve the local time
-          scheduleDate = baseDate.toISOString();
-        } else if (scheduleDate) {
-          // If scheduleDate already has time, ensure it's in ISO format
-          try {
-            const date = new Date(scheduleDate);
-            if (!isNaN(date.getTime())) {
-              scheduleDate = date.toISOString();
-            } else {
-              console.warn(`Invalid date format: ${scheduleDate}`);
-              scheduleDate = new Date().toISOString();
+            const baseDate = new Date(year, month - 1, day);
+            if (defaultTime) {
+              const [h, m] = defaultTime.split(':');
+              baseDate.setHours(Number(h), Number(m), 0, 0);
             }
-          } catch (err) {
-            console.warn(`Error parsing date: ${scheduleDate}`, err);
-            scheduleDate = new Date().toISOString();
+            scheduleDate = baseDate.toISOString();
+          } else {
+            try {
+              // Try parsing as a date
+              const date = new Date(scheduleDate);
+              if (!isNaN(date.getTime())) {
+                scheduleDate = date.toISOString();
+              } else {
+                // If not a valid date, use current date with default time
+                console.warn(`Invalid date format: ${scheduleDate}, using current date`);
+                const baseDate = new Date();
+                if (defaultTime) {
+                  const [h, m] = defaultTime.split(':');
+                  baseDate.setHours(Number(h), Number(m), 0, 0);
+                }
+                scheduleDate = baseDate.toISOString();
+              }
+            } catch (err) {
+              console.warn(`Error parsing date: ${scheduleDate}, using current date`, err);
+              const baseDate = new Date();
+              if (defaultTime) {
+                const [h, m] = defaultTime.split(':');
+                baseDate.setHours(Number(h), Number(m), 0, 0);
+              }
+              scheduleDate = baseDate.toISOString();
+            }
           }
+        } else {
+          // No scheduleDate provided, use current date with default time
+          const baseDate = new Date();
+          if (defaultTime) {
+            const [h, m] = defaultTime.split(':');
+            baseDate.setHours(Number(h), Number(m), 0, 0);
+          }
+          scheduleDate = baseDate.toISOString();
         }
 
         // Pass default time/days to preview card for display
@@ -469,15 +488,16 @@ function loadImage(src) {
 async function parseCsv(file) {
   const text = await file.text();
   const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
+  
+  // Skip the header row (first line) and process only the data rows
+  const dataRows = lines.slice(1);
+  
+  return dataRows.map(line => {
     const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-    const row = {};
-    headers.forEach((h, i) => row[h] = values[i]);
     return {
-      imageUrl: row['Image URL'] || row.imageUrl || '',
-      caption: row['Caption'] || row.caption || '',
-      scheduleDate: row['Schedule Date'] || row.scheduleDate || ''
+      imageUrl: values[0] || '',      // Column A: Image URL
+      caption: values[1] || '',       // Column B: Caption and hashtags
+      scheduleDate: values[2] || ''   // Column C: Date
     };
   });
 }
