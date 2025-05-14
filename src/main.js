@@ -813,6 +813,12 @@ window.previewPosts = async function() {
           console.log(`[DEBUG] Applied default time ${hh}:${mm} to post ${j} for page ${pageData.id} (local: ${scheduleDate})`);
         }
         console.log(`[DEBUG] Preview card for page ${pageData.id}, post ${j}: scheduleDate=${scheduleDate}`);
+        // Defensive check for renderPreviewCard
+        if (typeof window.renderPreviewCard !== 'function') {
+          console.error('renderPreviewCard is not available!');
+          showNotification('Preview function not loaded. Please refresh the page.', 'error');
+          return;
+        }
         const previewCard = await window.renderPreviewCard(pageData, { ...post, scheduleDate }, hasWatermark);
         if (previewCard) {
           container.appendChild(previewCard);
@@ -822,7 +828,7 @@ window.previewPosts = async function() {
     updateScheduleButton();
   } catch (err) {
     console.error("Failed to load preview posts:", err);
-    container.innerHTML = '<p style="color:red;">Failed to load preview posts</p>';
+    // container.innerHTML = '<p style="color:red;">Failed to load preview posts</p>'; // Removed as per user request
     showNotification('Failed to generate previews', 'error');
   }
 };
