@@ -707,132 +707,6 @@ window.displayDefaultTimesInSidebar = displayDefaultTimesInSidebar;
 window.addEventListener('fb-pages-ready', displayDefaultTimesInSidebar);
 window.addEventListener('DOMContentLoaded', displayDefaultTimesInSidebar);
 
-// Add debug logs and fix timezone handling in previewPosts
-window.previewPosts = async function() {
-  console.log('[DEBUG] previewPosts called');
-  const container = document.getElementById('previewContainer');
-  if (!container) return;
-
-  // Remove any previous error message (red alert)
-  const errorMsg = container.querySelector('p[style*="color:red"]');
-  if (errorMsg) errorMsg.remove();
-  // Also clear the container for a fresh start
-  container.innerHTML = '';
-
-  const postFile = document.getElementById('postCsv')?.files?.[0];
-  if (!postFile) {
-    showNotification('Please upload a Post CSV file first', 'warning');
-    return;
-  }
-
-  try {
-    const posts = await parseCsv(postFile);
-    console.log('[DEBUG] Posts parsed for preview:', posts);
-    if (!posts.length) {
-      container.innerHTML = '<p>No posts found in CSV file.</p>';
-      return;
-    }
-
-    const selectedPages = Array.from(document.querySelectorAll('.page-checkbox:checked'));
-    console.log('[DEBUG] Selected pages for preview:', selectedPages.map(p => p.dataset));
-    if (!selectedPages.length) {
-      showNotification('Please select at least one page', 'warning');
-      return;
-    }
-
-    // Clear existing previews
-    container.innerHTML = '';
-
-    console.log('[DEBUG] About to fetch default times for selected pages:', selectedPages.map(p => p.dataset));
-    // Fetch default times for each selected page
-    const defaultTimes = await Promise.all(selectedPages.map(async page => {
-      const pageId = page.dataset.id;
-      try {
-        const snap = await getDoc(doc(db, 'default_times', pageId));
-        console.log(`[DEBUG] Firestore default_times for page ${pageId}:`, snap.exists() ? snap.data() : null);
-        if (snap.exists() && snap.data().time) {
-          const [hh, mm] = snap.data().time.split(':');
-          console.log(`[DEBUG] Using default time for page ${pageId}: ${hh}:${mm}`);
-          return { hh: Number(hh), mm: Number(mm) };
-        } else {
-          showNotification(`No default time set for page: ${page.dataset.name}`, 'warning');
-        }
-      } catch (err) {
-        console.error(`[DEBUG] Error fetching default time for page ${pageId}:`, err);
-        showNotification(`Error fetching default time for page: ${page.dataset.name}`, 'warning');
-      }
-      return null;
-    }));
-
-    // For each selected page, create a preview for each post/image
-    for (let i = 0; i < selectedPages.length; i++) {
-      const page = selectedPages[i];
-      const pageData = {
-        id: page.dataset.id,
-        name: page.dataset.name,
-        platform: page.dataset.platform,
-        picture: { data: { url: page.dataset.picture } },
-        pageAccessToken: page.dataset.accessToken
-      };
-      console.log('[DEBUG] Rendering preview for page:', pageData);
-
-      if (!pageData.id || pageData.id === '0' || !pageData.pageAccessToken) {
-        console.warn(`[WARNING] Invalid page data:`, pageData);
-        continue;
-      }
-
-      // Check for watermark
-      const watermarkRef = ref(storage, `watermarks/${pageData.id}.jpg`);
-      let hasWatermark = false;
-      try {
-        await getDownloadURL(watermarkRef);
-        hasWatermark = true;
-      } catch (err) {
-        hasWatermark = false;
-      }
-
-      // For each post/image, create a preview card with the default time
-      for (let j = 0; j < posts.length; j++) {
-        const post = posts[j];
-        let scheduleDate = post.scheduleDate;
-        // If scheduleDate is missing or is just a date (no time), apply default time
-        const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-        if ((!scheduleDate || dateOnlyPattern.test(scheduleDate)) && defaultTimes[i]) {
-          let baseDate;
-          if (scheduleDate && dateOnlyPattern.test(scheduleDate)) {
-            // Parse MM/DD/YYYY or M/D/YYYY
-            const [month, day, year] = scheduleDate.split('/');
-            baseDate = new Date(year, month - 1, day);
-          } else {
-            baseDate = new Date();
-          }
-          const { hh, mm } = defaultTimes[i];
-          baseDate.setHours(hh, mm, 0, 0);
-          const pad = n => n.toString().padStart(2, '0');
-          scheduleDate = `${baseDate.getFullYear()}-${pad(baseDate.getMonth()+1)}-${pad(baseDate.getDate())}T${pad(hh)}:${pad(mm)}`;
-          console.log(`[DEBUG] Applied default time ${hh}:${mm} to post ${j} for page ${pageData.id} (local: ${scheduleDate})`);
-        }
-        console.log(`[DEBUG] Preview card for page ${pageData.id}, post ${j}: scheduleDate=${scheduleDate}`);
-        // Defensive check for renderPreviewCard
-        if (typeof window.renderPreviewCard !== 'function') {
-          console.error('renderPreviewCard is not available!');
-          showNotification('Preview function not loaded. Please refresh the page.', 'error');
-          return;
-        }
-        const previewCard = await window.renderPreviewCard(pageData, { ...post, scheduleDate }, hasWatermark);
-        if (previewCard) {
-          container.appendChild(previewCard);
-        }
-      }
-    }
-    updateScheduleButton();
-  } catch (err) {
-    console.error("Failed to load preview posts:", err);
-    // container.innerHTML = '<p style="color:red;">Failed to load preview posts</p>'; // Removed as per user request
-    showNotification('Failed to generate previews', 'error');
-  }
-};
-
 // Add preview button click handler
 document.getElementById('previewBtn').addEventListener('click', async () => {
   const selectedCheckboxes = document.querySelectorAll('#facebookPages input[type="checkbox"]:checked, #instagramPages input[type="checkbox"]:checked');
@@ -843,7 +717,7 @@ document.getElementById('previewBtn').addEventListener('click', async () => {
     return;
   }
 
-  await previewPosts();
+  await handlePreview();
 });
 
 window.openWatermarkModal = openWatermarkModal;
