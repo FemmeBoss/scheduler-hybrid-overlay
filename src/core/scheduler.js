@@ -168,6 +168,20 @@ async function handlePreview() {
           baseDate.setHours(Number(h), Number(m), 0, 0);
           // Store the date in ISO format but preserve the local time
           scheduleDate = baseDate.toISOString();
+        } else if (scheduleDate) {
+          // If scheduleDate already has time, ensure it's in ISO format
+          try {
+            const date = new Date(scheduleDate);
+            if (!isNaN(date.getTime())) {
+              scheduleDate = date.toISOString();
+            } else {
+              console.warn(`Invalid date format: ${scheduleDate}`);
+              scheduleDate = new Date().toISOString();
+            }
+          } catch (err) {
+            console.warn(`Error parsing date: ${scheduleDate}`, err);
+            scheduleDate = new Date().toISOString();
+          }
         }
 
         // Pass default time/days to preview card for display

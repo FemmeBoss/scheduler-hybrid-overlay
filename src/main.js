@@ -707,21 +707,6 @@ window.displayDefaultTimesInSidebar = displayDefaultTimesInSidebar;
 window.addEventListener('fb-pages-ready', displayDefaultTimesInSidebar);
 window.addEventListener('DOMContentLoaded', displayDefaultTimesInSidebar);
 
-// Add preview button click handler
-document.getElementById('previewBtn').addEventListener('click', async () => {
-  const selectedCheckboxes = document.querySelectorAll('#facebookPages input[type="checkbox"]:checked, #instagramPages input[type="checkbox"]:checked');
-  const postFile = document.getElementById('postCsv')?.files?.[0];
-  
-  if (!selectedCheckboxes.length || !postFile) {
-    showNotification('Please select pages and upload a Post CSV.', 'error');
-    return;
-  }
-
-  await handlePreview();
-});
-
-window.openWatermarkModal = openWatermarkModal;
-
 // CSV Builder Functionality
 document.addEventListener('DOMContentLoaded', () => {
   const imageInput = document.getElementById('imageInput');
