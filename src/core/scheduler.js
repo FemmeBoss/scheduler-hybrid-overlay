@@ -162,29 +162,14 @@ async function handlePreview() {
             // Handle MM/DD/YYYY format
             const [month, day, year] = scheduleDate.split('/');
             const baseDate = new Date(year, month - 1, day);
-            if (defaultTime) {
-              const [h, m] = defaultTime.split(':');
-              baseDate.setHours(Number(h), Number(m), 0, 0);
-            }
-            scheduleDate = baseDate.toISOString();
-          } else {
-            try {
-              // Try parsing as a date
-              const date = new Date(scheduleDate);
-              if (!isNaN(date.getTime())) {
-                scheduleDate = date.toISOString();
-              } else {
-                // If not a valid date, use current date with default time
-                console.warn(`Invalid date format: ${scheduleDate}, using current date`);
-                const baseDate = new Date();
-                if (defaultTime) {
-                  const [h, m] = defaultTime.split(':');
-                  baseDate.setHours(Number(h), Number(m), 0, 0);
-                }
-                scheduleDate = baseDate.toISOString();
+            if (!isNaN(baseDate.getTime())) {
+              if (defaultTime) {
+                const [h, m] = defaultTime.split(':');
+                baseDate.setHours(Number(h), Number(m), 0, 0);
               }
-            } catch (err) {
-              console.warn(`Error parsing date: ${scheduleDate}, using current date`, err);
+              scheduleDate = baseDate.toISOString();
+            } else {
+              console.warn(`Invalid date values: ${scheduleDate}, using current date`);
               const baseDate = new Date();
               if (defaultTime) {
                 const [h, m] = defaultTime.split(':');
@@ -192,6 +177,15 @@ async function handlePreview() {
               }
               scheduleDate = baseDate.toISOString();
             }
+          } else {
+            // Not a valid date format, use current date with default time
+            console.warn(`Invalid date format: ${scheduleDate}, using current date`);
+            const baseDate = new Date();
+            if (defaultTime) {
+              const [h, m] = defaultTime.split(':');
+              baseDate.setHours(Number(h), Number(m), 0, 0);
+            }
+            scheduleDate = baseDate.toISOString();
           }
         } else {
           // No scheduleDate provided, use current date with default time
