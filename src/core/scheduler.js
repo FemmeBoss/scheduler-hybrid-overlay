@@ -154,83 +154,52 @@ async function handlePreview() {
 
         // If scheduleDate is missing time, apply default time
         let scheduleDate = post.scheduleDate;
-        const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-        const dateTimePattern = /^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2} ?([AaPp][Mm])$/;
-        
         // Clean up scheduleDate
         if (typeof scheduleDate === 'string') {
           scheduleDate = scheduleDate.trim().replace(/^"|"$/g, '');
         }
-        
-        if (scheduleDate && typeof scheduleDate === 'string') {
-          if (dateOnlyPattern.test(scheduleDate)) {
-            // Handle MM/DD/YYYY format
-            const [month, day, year] = scheduleDate.split('/');
-            const baseDate = new Date(year, month - 1, day);
-            if (!isNaN(baseDate.getTime())) {
-              if (defaultTime) {
-                const [h, m] = defaultTime.split(':');
-                baseDate.setHours(Number(h), Number(m), 0, 0);
-              }
-              scheduleDate = baseDate.toISOString();
-            } else {
-              console.warn(`Invalid date values: ${scheduleDate}, using current date`);
-              const baseDate = new Date();
-              if (defaultTime) {
-                const [h, m] = defaultTime.split(':');
-                baseDate.setHours(Number(h), Number(m), 0, 0);
-              }
-              scheduleDate = baseDate.toISOString();
-            }
-          } else {
-            // Try to parse YYYY-MM-DD HH:MM AM/PM (with space separation)
-            const dateTimeParts = scheduleDate.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{2}) ?([AaPp][Mm])$/);
-            if (dateTimeParts) {
-              const [, year, month, day, hourStr, minuteStr, ampm] = dateTimeParts;
-              let hour = parseInt(hourStr, 10);
-              const minute = parseInt(minuteStr, 10);
-              const ampmUpper = ampm.toUpperCase();
-              if (ampmUpper === 'PM' && hour < 12) hour += 12;
-              if (ampmUpper === 'AM' && hour === 12) hour = 0;
-              const baseDate = new Date(year, month - 1, day, hour, minute);
-              if (!isNaN(baseDate.getTime())) {
-                scheduleDate = baseDate.toISOString();
-              } else {
-                console.warn(`Invalid date values: ${scheduleDate}, using current date`);
-                const baseDate = new Date();
-                if (defaultTime) {
-                  const [h, m] = defaultTime.split(':');
-                  baseDate.setHours(Number(h), Number(m), 0, 0);
-                }
-                scheduleDate = baseDate.toISOString();
-              }
-            } else {
-              // Not a valid date format, use current date with default time
-              console.warn(`Invalid date format: ${scheduleDate}, using current date`);
-              const baseDate = new Date();
-              if (defaultTime) {
-                const [h, m] = defaultTime.split(':');
-                baseDate.setHours(Number(h), Number(m), 0, 0);
-              }
-              scheduleDate = baseDate.toISOString();
-            }
-          }
+        let parsedDate = null;
+        let dateWarning = '';
+        // Try MM/DD/YYYY
+        const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+        if (dateOnlyPattern.test(scheduleDate)) {
+          const [month, day, year] = scheduleDate.split('/');
+          parsedDate = new Date(year, month - 1, day);
         } else {
-          // No scheduleDate provided, use current date with default time
-          const baseDate = new Date();
-          if (defaultTime) {
-            const [h, m] = defaultTime.split(':');
-            baseDate.setHours(Number(h), Number(m), 0, 0);
+          // Try YYYY-MM-DD HH:MM AM/PM
+          const dateTimeParts = scheduleDate.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{1,2}):([0-9]{2}) ?([AaPp][Mm])$/);
+          if (dateTimeParts) {
+            const [, year, month, day, hourStr, minuteStr, ampm] = dateTimeParts;
+            let hour = parseInt(hourStr, 10);
+            const minute = parseInt(minuteStr, 10);
+            const ampmUpper = ampm.toUpperCase();
+            if (ampmUpper === 'PM' && hour < 12) hour += 12;
+            if (ampmUpper === 'AM' && hour === 12) hour = 0;
+            parsedDate = new Date(year, month - 1, day, hour, minute);
+          } else {
+            // Try letting the browser parse it
+            parsedDate = new Date(scheduleDate);
           }
-          scheduleDate = baseDate.toISOString();
         }
+        if (!parsedDate || isNaN(parsedDate.getTime())) {
+          console.warn(`[DATE PARSE FAIL] Raw value: '${post.scheduleDate}' (cleaned: '${scheduleDate}') - using current date`);
+          dateWarning = `⚠️ Invalid date: ${post.scheduleDate}`;
+          parsedDate = new Date();
+        }
+        // Apply default time if needed
+        if (defaultTime) {
+          const [h, m] = defaultTime.split(':');
+          parsedDate.setHours(Number(h), Number(m), 0, 0);
+        }
+        scheduleDate = parsedDate.toISOString();
 
         // Pass default time/days to preview card for display
         const previewCard = await renderPreviewCard(pageData, {
           ...post,
           scheduleDate,
           _defaultTime: defaultTime,
-          _defaultDays: defaultDays
+          _defaultDays: defaultDays,
+          _dateWarning: dateWarning
         });
         if (previewCard) {
           previewContainer.appendChild(previewCard);
