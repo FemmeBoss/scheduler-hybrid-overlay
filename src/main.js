@@ -269,6 +269,7 @@ function openWatermarkModal(profileId) {
 
   modal.classList.add('active');
 }
+window.openWatermarkModal = openWatermarkModal;
 
 document.getElementById('closeWatermarkModal').onclick = () => {
   document.getElementById('watermarkModal').classList.remove('active');
