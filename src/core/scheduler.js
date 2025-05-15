@@ -203,17 +203,34 @@ async function handlePreview() {
                 });
 
                 if (previewCard) {
-                  previewContainer.appendChild(previewCard);
-                  // Get the watermarked image URL from the preview card
                   const watermarkedImage = previewCard.querySelector('.preview-image')?.src;
-                  cachedPosts.push({
-                    ...post,
-                    pageId: pageData.id,
-                    pageName: pageData.name,
-                    platform: pageData.platform,
-                    scheduleDate,
-                    imageUrl: watermarkedImage // <-- Use the watermarked Cloudinary URL
-                  });
+                  if (watermarkedImage && watermarkedImage.startsWith('http')) {
+                    cachedPosts.push({
+                      ...post,
+                      pageId: pageData.id,
+                      pageName: pageData.name,
+                      platform: pageData.platform,
+                      scheduleDate,
+                      imageUrl: watermarkedImage
+                    });
+                    console.log('[DEBUG] Added to cachedPosts:', {
+                      pageName: pageData.name,
+                      imageUrl: watermarkedImage,
+                      post
+                    });
+                  } else {
+                    console.warn(`[CACHEDPOSTS] Skipping ${pageData.name} - no valid watermarked image URL`);
+                    // Add a warning to the preview card if image is missing
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'preview-warning';
+                    warningDiv.style.color = '#b00';
+                    warningDiv.style.fontWeight = 'bold';
+                    warningDiv.style.fontSize = '14px';
+                    warningDiv.style.marginTop = '8px';
+                    warningDiv.textContent = '⚠️ Error: No valid image generated for this page. This post will not be scheduled.';
+                    previewCard.appendChild(warningDiv);
+                  }
+                  previewContainer.appendChild(previewCard);
                 }
                 completedPreviews++;
                 updateProgress();
