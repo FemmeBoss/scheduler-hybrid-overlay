@@ -339,11 +339,15 @@ async function handleSchedule() {
   const scheduledPosts = [];
   const BATCH_SIZE = 5;
   let currentBatch = 0;
+  let successfulSchedules = 0;
+  let failedSchedules = 0;
 
   try {
     if (!cachedPosts.length) {
       throw new Error("No posts to schedule. Please preview posts first.");
     }
+
+    console.log(`[SCHEDULE] Starting to schedule ${cachedPosts.length} posts in batches of ${BATCH_SIZE}`);
 
     // Process posts in batches
     while (currentBatch * BATCH_SIZE < cachedPosts.length) {
@@ -358,6 +362,7 @@ async function handleSchedule() {
         const { caption, scheduleDate, pageId, pageName, platform, _finalImageUrls } = post;
         if (!pageId || pageId === '0') {
           console.warn(`⚠️ Skipping invalid page ID for ${pageName}`);
+          failedSchedules++;
           continue;
         }
 
@@ -375,13 +380,16 @@ async function handleSchedule() {
         const finalImageUrl = _finalImageUrls?.[pageId];
         if (!finalImageUrl) {
           console.warn(`⚠️ No image found for ${pageName}, skipping.`);
+          failedSchedules++;
           continue;
         }
 
         // Find the correct page object for access token
         const page = cachedPages.find(p => p.id === pageId);
         if (!page || !page.pageAccessToken) {
-          throw new Error(`Missing access token for ${pageName}`);
+          console.error(`❌ Missing access token for ${pageName}`);
+          failedSchedules++;
+          continue;
         }
 
         try {
@@ -398,6 +406,7 @@ async function handleSchedule() {
             formData.append('scheduled_publish_time', scheduledUnix);
             formData.append('published', 'false');
 
+            console.log(`[FB] Scheduling post for ${pageName} at ${new Date(scheduledUnix * 1000).toISOString()}`);
             scheduledResponse = await postToFacebook(pageId, formData, scheduledUnix);
             if (scheduledResponse && scheduledResponse.id) {
               scheduledPostId = scheduledResponse.id;
@@ -455,12 +464,13 @@ async function handleSchedule() {
             // Update local state
             scheduledPosts.push({ ...scheduledPost, id: scheduledPostRef.id });
             statusEl.innerHTML += `✅ Scheduled: ${pageName} for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}<br>`;
+            successfulSchedules++;
           });
 
         } catch (err) {
           console.error(`🔥 Error scheduling for ${pageName}:`, err);
           statusEl.innerHTML += `❌ Failed: ${pageName} — ${err.message}<br>`;
-          throw err;
+          failedSchedules++;
         }
       }
 
@@ -472,13 +482,17 @@ async function handleSchedule() {
       currentBatch++;
     }
 
-    statusEl.innerHTML += `<br>✅ All posts processed!`;
+    console.log(`[SCHEDULE] Completed scheduling. Success: ${successfulSchedules}, Failed: ${failedSchedules}`);
+    statusEl.innerHTML += `<br>✅ All posts processed! (${successfulSchedules} successful, ${failedSchedules} failed)`;
     statusEl.style.color = 'green';
     
     // Refresh the scheduled posts view
     const viewScheduledBtn = document.getElementById('viewScheduledBtn');
     if (viewScheduledBtn) {
+      console.log('[SCHEDULE] Refreshing scheduled posts view...');
       viewScheduledBtn.click();
+    } else {
+      console.warn('[SCHEDULE] Could not find viewScheduledBtn to refresh view');
     }
 
   } catch (error) {
@@ -961,3 +975,18 @@ function formatDateForInput(dateString) {
   const pad = n => n.toString().padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
+// Debug: Test Firestore write function
+async function testFirestoreWrite() {
+  try {
+    const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
+    const docRef = await addDoc(collection(db, 'scheduledPosts'), {
+      test: true,
+      createdAt: new Date().toISOString()
+    });
+    console.log('✅ Test doc written with ID:', docRef.id);
+  } catch (err) {
+    console.error('🔥 Firestore write failed:', err);
+  }
+}
+window.testFirestoreWrite = testFirestoreWrite;
