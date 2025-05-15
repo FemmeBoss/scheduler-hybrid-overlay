@@ -254,7 +254,7 @@ async function handlePreview() {
     }
 
     // Process initial batch
-    await processInBatches(previewTasks, 10);
+    await processInBatches(previewTasks, 3, 400);
 
     // Retry failed previews up to 3 times
     let retryCount = 0;
@@ -302,7 +302,7 @@ async function handlePreview() {
       failedPreviews = [];
       
       // Process retry batch
-      await processInBatches(retryTasks, 5); // Use smaller batch size for retries
+      await processInBatches(retryTasks, 3, 400); // Use smaller batch size for retries
     }
 
     // Remove loading indicator
@@ -587,21 +587,30 @@ async function parseCsv(file) {
   });
 }
 
-async function processInBatches(tasks, batchSize = 5) {
+// Utility: Promise with timeout
+function withTimeout(promise, ms, errorMsg = 'Task timed out') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
+  ]);
+}
+
+// Utility: Sleep/delay
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Modified processInBatches to add delay between batches
+async function processInBatches(tasks, batchSize = 3, delayMs = 400) {
   let index = 0;
-  async function worker() {
-    while (index < tasks.length) {
-      const currentIndex = index++;
-      try {
-        await tasks[currentIndex]();
-      } catch (error) {
-        console.error(`Batch task ${currentIndex} failed`, error);
-      }
+  while (index < tasks.length) {
+    const batch = tasks.slice(index, index + batchSize);
+    await Promise.all(batch.map(task => task()));
+    index += batchSize;
+    if (index < tasks.length) {
+      await sleep(delayMs);
     }
   }
-  const workers = [];
-  for (let i = 0; i < batchSize; i++) workers.push(worker());
-  await Promise.all(workers);
 }
 
 async function safeAddDoc(collectionPath, data) {
@@ -932,12 +941,4 @@ function formatDateForInput(dateString) {
   const date = new Date(dateString);
   const pad = n => n.toString().padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-// Utility: Promise with timeout
-function withTimeout(promise, ms, errorMsg = 'Task timed out') {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
-  ]);
 }
