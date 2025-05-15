@@ -441,6 +441,9 @@ async function handleSchedule() {
               creationId: creationId
             };
 
+            // Debug log before writing to Firestore
+            console.log('[DEBUG] About to write scheduledPost:', scheduledPost);
+
             // Add to scheduledPosts collection
             const scheduledPostRef = doc(collection(db, 'scheduledPosts'));
             transaction.set(scheduledPostRef, scheduledPost);
