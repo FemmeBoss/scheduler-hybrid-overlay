@@ -610,7 +610,24 @@ async function renderPreviewCard(page, post) {
   try {
     if (!post || !post.imageUrl) {
       console.warn(`[WARNING] No valid post data for ${page.name}`);
-      return null;
+      // Create a card with error message
+      const card = document.createElement('div');
+      card.className = 'preview-card preview-error';
+      card.innerHTML = `
+        <div class="preview-header">
+          <img src="assets/default-profile.png" alt="${page.name}" class="preview-profile">
+          <div class="preview-info">
+            <div class="preview-name">${page.name}</div>
+            <div class="preview-platform">${page.platform}</div>
+          </div>
+        </div>
+        <div class="preview-content">
+          <div class="preview-warning" style="color:#b00; font-size:14px; font-weight:bold; margin-top:8px;">
+            ⚠️ Error: No image found for this post/page. Please check your CSV or try another page.
+          </div>
+        </div>
+      `;
+      return card;
     }
 
     const { imageUrl, caption, scheduleDate, _defaultTime, _defaultDays, _dateWarning, _pageAccessTokenWarning } = post;
