@@ -337,120 +337,139 @@ async function handleSchedule() {
   statusEl.style.display = 'block';
 
   const scheduledPosts = [];
+  const BATCH_SIZE = 5;
+  let currentBatch = 0;
 
   try {
     if (!cachedPosts.length) {
       throw new Error("No posts to schedule. Please preview posts first.");
     }
 
-    for (const post of cachedPosts) {
-      const { caption, scheduleDate, pageId, pageName, platform, _finalImageUrls } = post;
-      if (!pageId || pageId === '0') {
-        console.warn(`⚠️ Skipping invalid page ID for ${pageName}`);
-        continue;
-      }
+    // Process posts in batches
+    while (currentBatch * BATCH_SIZE < cachedPosts.length) {
+      const startIdx = currentBatch * BATCH_SIZE;
+      const endIdx = Math.min(startIdx + BATCH_SIZE, cachedPosts.length);
+      const currentBatchPosts = cachedPosts.slice(startIdx, endIdx);
 
-      // Convert the schedule date to a Unix timestamp, preserving the local time
-      const scheduledDate = new Date(scheduleDate);
-      let scheduledUnix = Math.floor(scheduledDate.getTime() / 1000);
-      const nowUnix = Math.floor(Date.now() / 1000);
+      statusEl.innerHTML = `<div class="scheduling-spinner"></div><p>Scheduling batch ${currentBatch + 1} of ${Math.ceil(cachedPosts.length / BATCH_SIZE)}...</p>`;
 
-      // Ensure minimum scheduling time is 20 minutes from now
-      if (scheduledUnix - nowUnix < 1200) {
-        console.warn("⚠️ Scheduled time too soon. Adjusted to 20 minutes from now.");
-        scheduledUnix = nowUnix + 1200;
-      }
-
-      const finalImageUrl = _finalImageUrls?.[pageId];
-      if (!finalImageUrl) {
-        console.warn(`⚠️ No image found for ${pageName}, skipping.`);
-        continue;
-      }
-
-      // Find the correct page object for access token
-      const page = cachedPages.find(p => p.id === pageId);
-      if (!page || !page.pageAccessToken) {
-        throw new Error(`Missing access token for ${pageName}`);
-      }
-
-      try {
-        let scheduledPostId = null;
-        let scheduledResponse = null;
-        let creationId = null;
-
-        if (platform === 'facebook') {
-          // Facebook scheduling
-          const formData = new FormData();
-          formData.append('url', finalImageUrl);
-          formData.append('caption', caption);
-          formData.append('access_token', page.pageAccessToken);
-          formData.append('scheduled_publish_time', scheduledUnix);
-          formData.append('published', 'false');
-
-          scheduledResponse = await postToFacebook(pageId, formData, scheduledUnix);
-          if (scheduledResponse && scheduledResponse.id) {
-            scheduledPostId = scheduledResponse.id;
-            console.log(`[FB] Successfully scheduled post ${scheduledPostId} for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}`);
-          } else {
-            throw new Error('No post ID returned from Facebook');
-          }
-        } else {
-          // Instagram scheduling
-          console.log(`[IG] Starting upload for ${pageName} scheduled for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}`);
-          creationId = await uploadToInstagram(pageId, page.pageAccessToken, finalImageUrl, caption);
-          if (!creationId) {
-            throw new Error('Failed to create Instagram container');
-          }
+      // Process current batch
+      for (const post of currentBatchPosts) {
+        const { caption, scheduleDate, pageId, pageName, platform, _finalImageUrls } = post;
+        if (!pageId || pageId === '0') {
+          console.warn(`⚠️ Skipping invalid page ID for ${pageName}`);
+          continue;
         }
 
-        // Use a transaction to ensure atomic operations
-        await runTransaction(db, async (transaction) => {
-          // Create the scheduled post
-          const scheduledPost = {
-            pageId,
-            pageName,
-            platform,
-            caption,
-            scheduleDate: new Date(scheduledUnix * 1000).toISOString(),
-            imageUrl: finalImageUrl,
-            postId: scheduledPostId,
-            scheduledUnix,
-            createdAt: new Date().toISOString(),
-            status: platform === 'facebook' ? 'scheduled' : 'pending',
-            scheduledResponse: scheduledResponse,
-            creationId: creationId
-          };
+        // Convert the schedule date to a Unix timestamp, preserving the local time
+        const scheduledDate = new Date(scheduleDate);
+        let scheduledUnix = Math.floor(scheduledDate.getTime() / 1000);
+        const nowUnix = Math.floor(Date.now() / 1000);
 
-          // Add to scheduledPosts collection
-          const scheduledPostRef = doc(collection(db, 'scheduledPosts'));
-          transaction.set(scheduledPostRef, scheduledPost);
+        // Ensure minimum scheduling time is 20 minutes from now
+        if (scheduledUnix - nowUnix < 1200) {
+          console.warn("⚠️ Scheduled time too soon. Adjusted to 20 minutes from now.");
+          scheduledUnix = nowUnix + 1200;
+        }
 
-          // For Instagram posts, also add to pending queue
-          if (platform === 'instagram' && creationId) {
-            const pendingPost = {
-              pageId,
-              creationId: creationId,
-              accessToken: page.pageAccessToken,
-              scheduledUnix,
-              scheduledPostId: scheduledPostRef.id,
-              createdAt: new Date().toISOString(),
-              retryCount: 0
-            };
+        const finalImageUrl = _finalImageUrls?.[pageId];
+        if (!finalImageUrl) {
+          console.warn(`⚠️ No image found for ${pageName}, skipping.`);
+          continue;
+        }
 
-            const pendingPostRef = doc(collection(db, 'pendingIGPosts'));
-            transaction.set(pendingPostRef, pendingPost);
+        // Find the correct page object for access token
+        const page = cachedPages.find(p => p.id === pageId);
+        if (!page || !page.pageAccessToken) {
+          throw new Error(`Missing access token for ${pageName}`);
+        }
+
+        try {
+          let scheduledPostId = null;
+          let scheduledResponse = null;
+          let creationId = null;
+
+          if (platform === 'facebook') {
+            // Facebook scheduling
+            const formData = new FormData();
+            formData.append('url', finalImageUrl);
+            formData.append('caption', caption);
+            formData.append('access_token', page.pageAccessToken);
+            formData.append('scheduled_publish_time', scheduledUnix);
+            formData.append('published', 'false');
+
+            scheduledResponse = await postToFacebook(pageId, formData, scheduledUnix);
+            if (scheduledResponse && scheduledResponse.id) {
+              scheduledPostId = scheduledResponse.id;
+              console.log(`[FB] Successfully scheduled post ${scheduledPostId} for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}`);
+            } else {
+              throw new Error('No post ID returned from Facebook');
+            }
+          } else {
+            // Instagram scheduling
+            console.log(`[IG] Starting upload for ${pageName} scheduled for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}`);
+            creationId = await uploadToInstagram(pageId, page.pageAccessToken, finalImageUrl, caption);
+            if (!creationId) {
+              throw new Error('Failed to create Instagram container');
+            }
           }
 
-          // Update local state
-          scheduledPosts.push({ ...scheduledPost, id: scheduledPostRef.id });
-          statusEl.innerHTML += `✅ Scheduled: ${pageName} for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}<br>`;
-        });
+          // Use a transaction to ensure atomic operations
+          await runTransaction(db, async (transaction) => {
+            // Create the scheduled post
+            const scheduledPost = {
+              pageId,
+              pageName,
+              platform,
+              caption,
+              scheduleDate: new Date(scheduledUnix * 1000).toISOString(),
+              imageUrl: finalImageUrl,
+              postId: scheduledPostId,
+              scheduledUnix,
+              createdAt: new Date().toISOString(),
+              status: platform === 'facebook' ? 'scheduled' : 'pending',
+              scheduledResponse: scheduledResponse,
+              creationId: creationId
+            };
 
-      } catch (err) {
-        console.error(`🔥 Error scheduling for ${pageName}:`, err);
-        statusEl.innerHTML += `❌ Failed: ${pageName} — ${err.message}<br>`;
-        throw err;
+            // Add to scheduledPosts collection
+            const scheduledPostRef = doc(collection(db, 'scheduledPosts'));
+            transaction.set(scheduledPostRef, scheduledPost);
+
+            // For Instagram posts, also add to pending queue
+            if (platform === 'instagram' && creationId) {
+              const pendingPost = {
+                pageId,
+                creationId: creationId,
+                accessToken: page.pageAccessToken,
+                scheduledUnix,
+                scheduledPostId: scheduledPostRef.id,
+                createdAt: new Date().toISOString(),
+                retryCount: 0
+              };
+
+              const pendingPostRef = doc(collection(db, 'pendingIGPosts'));
+              transaction.set(pendingPostRef, pendingPost);
+            }
+
+            // Update local state
+            scheduledPosts.push({ ...scheduledPost, id: scheduledPostRef.id });
+            statusEl.innerHTML += `✅ Scheduled: ${pageName} for ${formatDateForDisplay(new Date(scheduledUnix * 1000))}<br>`;
+          });
+
+        } catch (err) {
+          console.error(`🔥 Error scheduling for ${pageName}:`, err);
+          statusEl.innerHTML += `❌ Failed: ${pageName} — ${err.message}<br>`;
+          throw err;
+        }
       }
+
+      // Wait 2 seconds before processing next batch
+      if (endIdx < cachedPosts.length) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      currentBatch++;
     }
 
     statusEl.innerHTML += `<br>✅ All posts processed!`;
