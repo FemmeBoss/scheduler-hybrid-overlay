@@ -116,109 +116,186 @@ async function handlePreview() {
     // Clear existing previews
     previewContainer.innerHTML = '';
 
+    // Add loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'preview-loading';
+    loadingDiv.innerHTML = `
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Generating previews... <span class="progress">0/0</span></div>
+    `;
+    previewContainer.appendChild(loadingDiv);
+
+    // Track progress
+    let completedPreviews = 0;
+    let failedPreviews = [];
+    const totalPreviews = posts.length * selectedPages.length;
+
+    function updateProgress() {
+      const progressEl = loadingDiv.querySelector('.progress');
+      if (progressEl) {
+        progressEl.textContent = `${completedPreviews}/${totalPreviews}`;
+      }
+    }
+
     // Create preview for each post and selected page in batches
     const previewTasks = [];
     for (const post of posts) {
       for (const page of selectedPages) {
-        previewTasks.push(async () => {
-          try {
-            const pageData = {
-              id: page.dataset.id,
-              name: page.dataset.name,
-              platform: page.dataset.platform,
-              picture: { data: { url: page.dataset.picture } },
-              pageAccessToken: page.dataset.accessToken
-            };
+        previewTasks.push(() =>
+          withTimeout(
+            (async () => {
+              try {
+                const pageData = {
+                  id: page.dataset.id,
+                  name: page.dataset.name,
+                  platform: page.dataset.platform,
+                  picture: { data: { url: page.dataset.picture } },
+                  pageAccessToken: page.dataset.accessToken
+                };
 
-            // Get watermark for the page (but don't require it)
-            const watermarkUrl = await getWatermark(pageData.id);
-            if (!watermarkUrl) {
-              console.log(`[INFO] No watermark for page ${pageData.name}, will preview without watermark.`);
-            }
-
-            // Fetch default time for this page
-            let defaultTime = '';
-            let defaultDays = [];
-            try {
-              const snap = await getDoc(doc(db, 'default_times', pageData.id));
-              if (snap.exists()) {
-                const data = snap.data();
-                defaultTime = data.time || '';
-                defaultDays = data.days || [];
-              }
-            } catch (err) {
-              console.warn(`[WARNING] Could not fetch default time for page ${pageData.name}`);
-            }
-
-            // Date parsing logic (already robust above)
-            let scheduleDate = post.scheduleDate;
-            if (typeof scheduleDate === 'string') {
-              scheduleDate = scheduleDate.trim().replace(/^"|"$/g, '');
-            }
-            let parsedDate = new Date(scheduleDate);
-            let dateWarning = '';
-            const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-            if (!iso8601Pattern.test(scheduleDate) || isNaN(parsedDate.getTime())) {
-              console.warn(`[DATE FORMAT ERROR] Expected ISO 8601 (YYYY-MM-DDTHH:MM), got: '${post.scheduleDate}' (cleaned: '${scheduleDate}') - using current date`);
-              dateWarning = `⚠️ Invalid date format: ${post.scheduleDate}. Use YYYY-MM-DDTHH:MM`;
-              parsedDate = new Date();
-            }
-            if (defaultTime) {
-              const [h, m] = defaultTime.split(':');
-              parsedDate.setHours(Number(h), Number(m), 0, 0);
-            }
-            scheduleDate = parsedDate.toISOString();
-
-            // Remove the check that skips pages without access tokens
-            // Instead, add a warning if missing
-            let pageAccessTokenWarning = '';
-            if (!pageData.pageAccessToken) {
-              pageAccessTokenWarning = '⚠️ No access token for this page. You will not be able to schedule posts.';
-            }
-
-            // Pass default time/days and warnings to preview card for display
-            const previewCard = await renderPreviewCard(pageData, {
-              ...post,
-              scheduleDate,
-              _defaultTime: defaultTime,
-              _defaultDays: defaultDays,
-              _dateWarning: dateWarning,
-              _pageAccessTokenWarning: pageAccessTokenWarning
-            });
-            if (previewCard) {
-              previewContainer.appendChild(previewCard);
-              // Cache the post with its watermarked image
-              const watermarkedImage = previewCard.querySelector('.preview-image').src;
-              cachedPosts.push({
-                ...post,
-                pageId: pageData.id,
-                pageName: pageData.name,
-                platform: pageData.platform,
-                scheduleDate,
-                _finalImageUrls: {
-                  [pageData.id]: watermarkedImage
+                // Get watermark for the page (but don't require it)
+                const watermarkUrl = await getWatermark(pageData.id);
+                if (!watermarkUrl) {
+                  console.log(`[INFO] No watermark for page ${pageData.name}, will preview without watermark.`);
                 }
-              });
-            }
-          } catch (err) {
-            console.error(`[PREVIEW ERROR] Failed to generate preview for page/post:`, err);
-          }
-        });
+
+                // Fetch default time for this page
+                let defaultTime = '';
+                let defaultDays = [];
+                try {
+                  const snap = await getDoc(doc(db, 'default_times', pageData.id));
+                  if (snap.exists()) {
+                    const data = snap.data();
+                    defaultTime = data.time || '';
+                    defaultDays = data.days || [];
+                  }
+                } catch (err) {
+                  console.warn(`[WARNING] Could not fetch default time for page ${pageData.name}`);
+                }
+
+                // Date parsing logic (already robust above)
+                let scheduleDate = post.scheduleDate;
+                if (typeof scheduleDate === 'string') {
+                  scheduleDate = scheduleDate.trim().replace(/^"|"$/g, '');
+                }
+                let parsedDate = new Date(scheduleDate);
+                let dateWarning = '';
+                const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+                if (!iso8601Pattern.test(scheduleDate) || isNaN(parsedDate.getTime())) {
+                  console.warn(`[DATE FORMAT ERROR] Expected ISO 8601 (YYYY-MM-DDTHH:MM), got: '${post.scheduleDate}' (cleaned: '${scheduleDate}') - using current date`);
+                  dateWarning = `⚠️ Invalid date format: ${post.scheduleDate}. Use YYYY-MM-DDTHH:MM`;
+                  parsedDate = new Date();
+                }
+                if (defaultTime) {
+                  const [h, m] = defaultTime.split(':');
+                  parsedDate.setHours(Number(h), Number(m), 0, 0);
+                }
+                scheduleDate = parsedDate.toISOString();
+
+                // Pass default time/days and warnings to preview card for display
+                const previewCard = await renderPreviewCard(pageData, {
+                  ...post,
+                  scheduleDate,
+                  _defaultTime: defaultTime,
+                  _defaultDays: defaultDays,
+                  _dateWarning: dateWarning,
+                  _pageAccessTokenWarning: !pageData.pageAccessToken ? '⚠️ No access token for this page. You will not be able to schedule posts.' : ''
+                });
+
+                if (previewCard) {
+                  previewContainer.appendChild(previewCard);
+                  cachedPosts.push({ ...post, pageId: pageData.id });
+                }
+                completedPreviews++;
+                updateProgress();
+              } catch (err) {
+                console.error(`[PREVIEW ERROR] Failed to generate preview for page/post:`, err);
+                failedPreviews.push({ post, page });
+                completedPreviews++;
+                updateProgress();
+              }
+            })(),
+            20000, // 20 seconds timeout
+            'Preview task timed out'
+          ).catch(err => {
+            console.error('[PREVIEW TIMEOUT/ERROR]', err);
+            failedPreviews.push({ post, page });
+            completedPreviews++;
+            updateProgress();
+          })
+        );
       }
     }
-    await processInBatches(previewTasks, 10); // Batch size 10
 
-    console.log('[DEBUG] Cached posts:', cachedPosts);
-    console.log('[DEBUG] Cached pages:', cachedPages);
+    // Process initial batch
+    await processInBatches(previewTasks, 10);
 
-    // Update schedule button state after all previews are loaded
+    // Retry failed previews up to 3 times
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (failedPreviews.length > 0 && retryCount < maxRetries) {
+      retryCount++;
+      console.log(`[RETRY] Attempt ${retryCount} for ${failedPreviews.length} failed previews`);
+      
+      // Wait 5 seconds before retrying
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      const retryTasks = failedPreviews.map(({ post, page }) => () =>
+        withTimeout(
+          (async () => {
+            try {
+              const pageData = {
+                id: page.dataset.id,
+                name: page.dataset.name,
+                platform: page.dataset.platform,
+                picture: { data: { url: page.dataset.picture } },
+                pageAccessToken: page.dataset.accessToken
+              };
+
+              const watermarkUrl = await getWatermark(pageData.id);
+              const previewCard = await renderPreviewCard(pageData, {
+                ...post,
+                scheduleDate: post.scheduleDate,
+                _pageAccessTokenWarning: !pageData.pageAccessToken ? '⚠️ No access token for this page. You will not be able to schedule posts.' : ''
+              });
+
+              if (previewCard) {
+                previewContainer.appendChild(previewCard);
+                cachedPosts.push({ ...post, pageId: pageData.id });
+              }
+            } catch (err) {
+              console.error(`[RETRY ERROR] Failed to generate preview for page/post:`, err);
+            }
+          })(),
+          20000,
+          'Preview retry timed out'
+        )
+      );
+
+      // Clear failed previews array before retry
+      failedPreviews = [];
+      
+      // Process retry batch
+      await processInBatches(retryTasks, 5); // Use smaller batch size for retries
+    }
+
+    // Remove loading indicator
+    loadingDiv.remove();
+
+    // Show final status
+    if (failedPreviews.length > 0) {
+      showNotification(`Completed ${completedPreviews} previews with ${failedPreviews.length} failures after ${maxRetries} retries`, 'warning');
+    } else {
+      showNotification(`Successfully generated ${completedPreviews} previews`, 'success');
+    }
+
+    // Update schedule button state
     const scheduleBtn = document.getElementById('scheduleBtn');
     if (scheduleBtn && cachedPosts.length > 0) {
       scheduleBtn.disabled = false;
       console.log('Schedule button enabled - previews loaded successfully');
     }
 
-    showNotification('Preview generated successfully', 'success');
   } catch (error) {
     console.error('[ERROR] Preview generation failed:', error);
     showNotification('Failed to generate preview. Please try again.', 'error');
@@ -812,4 +889,12 @@ function formatDateForInput(dateString) {
   const date = new Date(dateString);
   const pad = n => n.toString().padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+// Utility: Promise with timeout
+function withTimeout(promise, ms, errorMsg = 'Task timed out') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
+  ]);
 }
