@@ -204,7 +204,16 @@ async function handlePreview() {
 
                 if (previewCard) {
                   previewContainer.appendChild(previewCard);
-                  cachedPosts.push({ ...post, pageId: pageData.id });
+                  // Get the watermarked image URL from the preview card
+                  const watermarkedImage = previewCard.querySelector('.preview-image')?.src;
+                  cachedPosts.push({
+                    ...post,
+                    pageId: pageData.id,
+                    pageName: pageData.name,
+                    platform: pageData.platform,
+                    scheduleDate,
+                    imageUrl: watermarkedImage // <-- Use the watermarked Cloudinary URL
+                  });
                 }
                 completedPreviews++;
                 updateProgress();
