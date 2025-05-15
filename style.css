@@ -58,7 +58,8 @@ body {
   background-color: #ffffff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  height: fit-content;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -124,12 +125,14 @@ body {
 /* Sidebar Content */
 #facebookPages,
 #instagramPages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 1rem;
   max-height: calc(100vh - 200px);
-  overflow-y: auto;
   padding-right: 0.5rem;
   transition: all 0.3s ease;
 }
@@ -984,6 +987,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  opacity: 0;
+  animation: fadeInProfile 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
 }
 
 .profile-container:hover {
@@ -1546,4 +1551,9 @@ textarea {
   h1 {
     font-size: 1.25rem;
   }
+}
+
+@keyframes fadeInProfile {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
 }
