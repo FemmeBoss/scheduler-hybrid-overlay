@@ -1558,3 +1558,11 @@ textarea {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
 }
+
+.corinthia400 {
+  font-family: 'Corinthia', cursive;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  font-size: 2.5rem;
+  line-height: 1.1;
+}
