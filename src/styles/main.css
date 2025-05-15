@@ -22,10 +22,13 @@ body {
   background-color: #F9FAFB;
   position: relative;
   transition: all 0.3s ease;
+  flex-wrap: nowrap;
+  overflow-x: hidden;
 }
 
 #content {
-  flex-grow: 1;
+  flex: 1;
+  min-width: 0; /* Prevent flex item from growing beyond container */
   background-color: #ffffff;
   padding: 2rem;
   border-radius: 16px;
@@ -65,6 +68,7 @@ body {
 /* Sidebar */
 .sidebar {
   width: 320px;
+  min-width: 320px; /* Prevent sidebar from shrinking */
   padding: 1.25rem;
   background-color: #ffffff;
   border-radius: 16px;
@@ -75,6 +79,7 @@ body {
   position: sticky;
   top: 2rem;
   transition: all 0.3s ease;
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
 }
 
 .sidebar h3 {
@@ -150,10 +155,13 @@ body {
   border-radius: 12px;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 80px;
+  position: relative;
+  will-change: transform;
 }
 
 .profile-container:hover {
@@ -168,6 +176,7 @@ body {
   gap: 0.75rem;
   position: relative;
   width: 100%;
+  min-height: 40px;
 }
 
 .profile-header img {
@@ -175,6 +184,7 @@ body {
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .profile-info {
@@ -183,6 +193,26 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  overflow: hidden;
+}
+
+.page-name {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.platform-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: #6B7280;
+  line-height: 1.2;
 }
 
 /* Platform Indicator */
@@ -1103,6 +1133,9 @@ h3 {
   align-items: flex-start;
   gap: 1rem;
   margin-bottom: 2rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .page-groups-row {
@@ -1110,10 +1143,13 @@ h3 {
   flex-direction: row;
   gap: 1rem;
   align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
 #groupSelect {
   min-width: 180px;
+  max-width: 100%;
   margin-bottom: 0.5rem;
 }
 
@@ -1122,10 +1158,12 @@ h3 {
   flex-direction: row;
   gap: 0.75rem;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
 }
 
 #groupNameInput {
   min-width: 220px;
+  max-width: 100%;
   margin-right: 0.75rem;
 }
 
@@ -1134,15 +1172,40 @@ h3 {
   min-width: 120px;
 }
 
+@media (max-width: 1400px) {
+  #mainContainer {
+    flex-wrap: wrap;
+  }
+  
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    position: relative;
+    top: 0;
+    margin-bottom: 1rem;
+  }
+  
+  #content {
+    width: 100%;
+  }
+}
+
 @media (max-width: 600px) {
-  .page-groups-row, .group-action-buttons {
+  .page-groups-row, 
+  .group-action-buttons {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
   }
-  #groupNameInput, #saveGroupBtn {
+  
+  #groupNameInput, 
+  #saveGroupBtn {
     min-width: 0;
     width: 100%;
+  }
+  
+  #mainContainer {
+    padding: 1rem;
   }
 }
 
@@ -1257,4 +1320,48 @@ h3 {
   display: flex;
   align-items: center;
   gap: 0.5em;
+}
+
+/* Add container for page selection */
+#facebookPages,
+#instagramPages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  transition: all 0.3s ease;
+  contain: layout;
+}
+
+/* Add smooth loading state */
+.profile-container.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Add placeholder animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.profile-container.loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+  z-index: 1;
 } 
