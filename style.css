@@ -1566,3 +1566,21 @@ textarea {
   font-size: 2.5rem;
   line-height: 1.1;
 }
+
+.cinzel-lower {
+  font-family: 'Cinzel', serif;
+  font-weight: 400;
+  text-transform: lowercase;
+  font-size: 2rem;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+
+.corinthia-big {
+  font-family: 'Corinthia', cursive;
+  font-weight: 400;
+  font-size: 3.5rem;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  text-align: center;
+}
