@@ -174,13 +174,21 @@ async function handlePreview() {
         }
         scheduleDate = parsedDate.toISOString();
 
-        // Pass default time/days to preview card for display
+        // Remove the check that skips pages without access tokens
+        // Instead, add a warning if missing
+        let pageAccessTokenWarning = '';
+        if (!pageData.pageAccessToken) {
+          pageAccessTokenWarning = '⚠️ No access token for this page. You will not be able to schedule posts.';
+        }
+
+        // Pass default time/days and warnings to preview card for display
         const previewCard = await renderPreviewCard(pageData, {
           ...post,
           scheduleDate,
           _defaultTime: defaultTime,
           _defaultDays: defaultDays,
-          _dateWarning: dateWarning
+          _dateWarning: dateWarning,
+          _pageAccessTokenWarning: pageAccessTokenWarning
         });
         if (previewCard) {
           previewContainer.appendChild(previewCard);
@@ -528,7 +536,7 @@ async function renderPreviewCard(page, post) {
       return null;
     }
 
-    const { imageUrl, caption, scheduleDate, _defaultTime, _defaultDays } = post;
+    const { imageUrl, caption, scheduleDate, _defaultTime, _defaultDays, _dateWarning, _pageAccessTokenWarning } = post;
 
     // Get watermark for the page (but don't require it)
     const watermarkUrl = await getWatermark(page.id);
@@ -594,6 +602,8 @@ async function renderPreviewCard(page, post) {
       <div class="preview-content">
         <p class="preview-caption">${caption || 'No caption'}</p>
         <p class="preview-schedule">📅 ${formattedDate}${_defaultTime ? ` ⏰ ${_defaultTime}${daysText}` : ''}</p>
+        ${_dateWarning ? `<div class='preview-warning' style='color:#b00; font-size:13px; margin-top:4px;'>${_dateWarning}</div>` : ''}
+        ${_pageAccessTokenWarning ? `<div class='preview-warning' style='color:#b00; font-size:13px; margin-top:4px;'>${_pageAccessTokenWarning}</div>` : ''}
       </div>
     `;
 
