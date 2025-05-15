@@ -377,7 +377,8 @@ async function handleSchedule() {
           scheduledUnix = nowUnix + 1200;
         }
 
-        const finalImageUrl = _finalImageUrls?.[pageId];
+        // Use the correct image URL for scheduling
+        const finalImageUrl = _finalImageUrls?.[pageId] || post.imageUrl;
         if (!finalImageUrl) {
           console.warn(`⚠️ No image found for ${pageName}, skipping.`);
           failedSchedules++;
