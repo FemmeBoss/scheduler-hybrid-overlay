@@ -895,10 +895,10 @@ async function handleWatermarkUpload(pageId, file) {
 }
 
 async function renderPageSelection(page) {
-  const hasWatermark = await getWatermark(page.id);
   const container = document.createElement('div');
-  container.className = 'profile-container';
+  container.className = 'profile-container loading';
   
+  // Create initial structure with placeholder content
   container.innerHTML = `
     <div class="profile-header">
       <input type="checkbox" 
@@ -919,20 +919,35 @@ async function renderPageSelection(page) {
         </div>
       </div>
     </div>
-    <div class="watermark-management">
-      <button class="watermark-btn" onclick="openWatermarkModal('${page.id}')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="17 8 12 3 7 8"></polyline>
-          <line x1="12" y1="3" x2="12" y2="15"></line>
-        </svg>
-        Manage Watermark
-      </button>
-      <div class="watermark-status-icon ${hasWatermark ? 'has-watermark' : 'no-watermark'}" title="${hasWatermark ? 'Watermark uploaded' : 'No watermark uploaded'}">
-        ${hasWatermark ? '✓' : '⚠️'}
-      </div>
+  `;
+
+  // Add watermark management section
+  const watermarkManagement = document.createElement('div');
+  watermarkManagement.className = 'watermark-management';
+  
+  // Get watermark status asynchronously
+  const hasWatermark = await getWatermark(page.id);
+  
+  watermarkManagement.innerHTML = `
+    <button class="watermark-btn" onclick="openWatermarkModal('${page.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      Manage Watermark
+    </button>
+    <div class="watermark-status-icon ${hasWatermark ? 'has-watermark' : 'no-watermark'}" title="${hasWatermark ? 'Watermark uploaded' : 'No watermark uploaded'}">
+      ${hasWatermark ? '✓' : '⚠️'}
     </div>
   `;
+  
+  container.appendChild(watermarkManagement);
+  
+  // Remove loading state after a short delay to ensure smooth transition
+  setTimeout(() => {
+    container.classList.remove('loading');
+  }, 100);
   
   return container;
 }
