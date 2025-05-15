@@ -116,97 +116,93 @@ async function handlePreview() {
     // Clear existing previews
     previewContainer.innerHTML = '';
 
-    // Create preview for each post and selected page
+    // Create preview for each post and selected page in batches
+    const previewTasks = [];
     for (const post of posts) {
       for (const page of selectedPages) {
-        const pageData = {
-          id: page.dataset.id,
-          name: page.dataset.name,
-          platform: page.dataset.platform,
-          picture: { data: { url: page.dataset.picture } },
-          pageAccessToken: page.dataset.accessToken
-        };
+        previewTasks.push(async () => {
+          const pageData = {
+            id: page.dataset.id,
+            name: page.dataset.name,
+            platform: page.dataset.platform,
+            picture: { data: { url: page.dataset.picture } },
+            pageAccessToken: page.dataset.accessToken
+          };
 
-        if (!pageData.id || pageData.id === '0' || !pageData.pageAccessToken) {
-          console.warn(`[WARNING] Invalid page data:`, pageData);
-          continue;
-        }
-
-        // Get watermark for the page (but don't require it)
-        const watermarkUrl = await getWatermark(pageData.id);
-        if (!watermarkUrl) {
-          console.log(`[INFO] No watermark for page ${pageData.name}, will preview without watermark.`);
-        }
-
-        // Fetch default time for this page
-        let defaultTime = '';
-        let defaultDays = [];
-        try {
-          const snap = await getDoc(doc(db, 'default_times', pageData.id));
-          if (snap.exists()) {
-            const data = snap.data();
-            defaultTime = data.time || '';
-            defaultDays = data.days || [];
+          // Get watermark for the page (but don't require it)
+          const watermarkUrl = await getWatermark(pageData.id);
+          if (!watermarkUrl) {
+            console.log(`[INFO] No watermark for page ${pageData.name}, will preview without watermark.`);
           }
-        } catch (err) {
-          console.warn(`[WARNING] Could not fetch default time for page ${pageData.name}`);
-        }
 
-        // If scheduleDate is missing time, apply default time
-        let scheduleDate = post.scheduleDate;
-        // Clean up scheduleDate
-        if (typeof scheduleDate === 'string') {
-          scheduleDate = scheduleDate.trim().replace(/^"|"$/g, '');
-        }
-        let parsedDate = new Date(scheduleDate);
-        let dateWarning = '';
-        // Only accept ISO 8601 format (YYYY-MM-DDTHH:MM)
-        const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-        if (!iso8601Pattern.test(scheduleDate) || isNaN(parsedDate.getTime())) {
-          console.warn(`[DATE FORMAT ERROR] Expected ISO 8601 (YYYY-MM-DDTHH:MM), got: '${post.scheduleDate}' (cleaned: '${scheduleDate}') - using current date`);
-          dateWarning = `⚠️ Invalid date format: ${post.scheduleDate}. Use YYYY-MM-DDTHH:MM`;
-          parsedDate = new Date();
-        }
-        // Apply default time if needed
-        if (defaultTime) {
-          const [h, m] = defaultTime.split(':');
-          parsedDate.setHours(Number(h), Number(m), 0, 0);
-        }
-        scheduleDate = parsedDate.toISOString();
-
-        // Remove the check that skips pages without access tokens
-        // Instead, add a warning if missing
-        let pageAccessTokenWarning = '';
-        if (!pageData.pageAccessToken) {
-          pageAccessTokenWarning = '⚠️ No access token for this page. You will not be able to schedule posts.';
-        }
-
-        // Pass default time/days and warnings to preview card for display
-        const previewCard = await renderPreviewCard(pageData, {
-          ...post,
-          scheduleDate,
-          _defaultTime: defaultTime,
-          _defaultDays: defaultDays,
-          _dateWarning: dateWarning,
-          _pageAccessTokenWarning: pageAccessTokenWarning
-        });
-        if (previewCard) {
-          previewContainer.appendChild(previewCard);
-          // Cache the post with its watermarked image
-          const watermarkedImage = previewCard.querySelector('.preview-image').src;
-          cachedPosts.push({
-            ...post,
-            pageId: pageData.id,
-            pageName: pageData.name,
-            platform: pageData.platform,
-            scheduleDate,
-            _finalImageUrls: {
-              [pageData.id]: watermarkedImage
+          // Fetch default time for this page
+          let defaultTime = '';
+          let defaultDays = [];
+          try {
+            const snap = await getDoc(doc(db, 'default_times', pageData.id));
+            if (snap.exists()) {
+              const data = snap.data();
+              defaultTime = data.time || '';
+              defaultDays = data.days || [];
             }
+          } catch (err) {
+            console.warn(`[WARNING] Could not fetch default time for page ${pageData.name}`);
+          }
+
+          // Date parsing logic (already robust above)
+          let scheduleDate = post.scheduleDate;
+          if (typeof scheduleDate === 'string') {
+            scheduleDate = scheduleDate.trim().replace(/^"|"$/g, '');
+          }
+          let parsedDate = new Date(scheduleDate);
+          let dateWarning = '';
+          const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+          if (!iso8601Pattern.test(scheduleDate) || isNaN(parsedDate.getTime())) {
+            console.warn(`[DATE FORMAT ERROR] Expected ISO 8601 (YYYY-MM-DDTHH:MM), got: '${post.scheduleDate}' (cleaned: '${scheduleDate}') - using current date`);
+            dateWarning = `⚠️ Invalid date format: ${post.scheduleDate}. Use YYYY-MM-DDTHH:MM`;
+            parsedDate = new Date();
+          }
+          if (defaultTime) {
+            const [h, m] = defaultTime.split(':');
+            parsedDate.setHours(Number(h), Number(m), 0, 0);
+          }
+          scheduleDate = parsedDate.toISOString();
+
+          // Remove the check that skips pages without access tokens
+          // Instead, add a warning if missing
+          let pageAccessTokenWarning = '';
+          if (!pageData.pageAccessToken) {
+            pageAccessTokenWarning = '⚠️ No access token for this page. You will not be able to schedule posts.';
+          }
+
+          // Pass default time/days and warnings to preview card for display
+          const previewCard = await renderPreviewCard(pageData, {
+            ...post,
+            scheduleDate,
+            _defaultTime: defaultTime,
+            _defaultDays: defaultDays,
+            _dateWarning: dateWarning,
+            _pageAccessTokenWarning: pageAccessTokenWarning
           });
-        }
+          if (previewCard) {
+            previewContainer.appendChild(previewCard);
+            // Cache the post with its watermarked image
+            const watermarkedImage = previewCard.querySelector('.preview-image').src;
+            cachedPosts.push({
+              ...post,
+              pageId: pageData.id,
+              pageName: pageData.name,
+              platform: pageData.platform,
+              scheduleDate,
+              _finalImageUrls: {
+                [pageData.id]: watermarkedImage
+              }
+            });
+          }
+        });
       }
     }
+    await processInBatches(previewTasks, 4); // Batch size 4
 
     console.log('[DEBUG] Cached posts:', cachedPosts);
     console.log('[DEBUG] Cached pages:', cachedPages);
