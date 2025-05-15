@@ -158,32 +158,13 @@ async function handlePreview() {
         if (typeof scheduleDate === 'string') {
           scheduleDate = scheduleDate.trim().replace(/^"|"$/g, '');
         }
-        let parsedDate = null;
+        let parsedDate = new Date(scheduleDate);
         let dateWarning = '';
-        // Try MM/DD/YYYY
-        const dateOnlyPattern = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-        if (dateOnlyPattern.test(scheduleDate)) {
-          const [month, day, year] = scheduleDate.split('/');
-          parsedDate = new Date(year, month - 1, day);
-        } else {
-          // Try YYYY-MM-DD HH:MM AM/PM
-          const dateTimeParts = scheduleDate.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{1,2}):([0-9]{2}) ?([AaPp][Mm])$/);
-          if (dateTimeParts) {
-            const [, year, month, day, hourStr, minuteStr, ampm] = dateTimeParts;
-            let hour = parseInt(hourStr, 10);
-            const minute = parseInt(minuteStr, 10);
-            const ampmUpper = ampm.toUpperCase();
-            if (ampmUpper === 'PM' && hour < 12) hour += 12;
-            if (ampmUpper === 'AM' && hour === 12) hour = 0;
-            parsedDate = new Date(year, month - 1, day, hour, minute);
-          } else {
-            // Try letting the browser parse it
-            parsedDate = new Date(scheduleDate);
-          }
-        }
-        if (!parsedDate || isNaN(parsedDate.getTime())) {
-          console.warn(`[DATE PARSE FAIL] Raw value: '${post.scheduleDate}' (cleaned: '${scheduleDate}') - using current date`);
-          dateWarning = `⚠️ Invalid date: ${post.scheduleDate}`;
+        // Only accept ISO 8601 format (YYYY-MM-DDTHH:MM)
+        const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+        if (!iso8601Pattern.test(scheduleDate) || isNaN(parsedDate.getTime())) {
+          console.warn(`[DATE FORMAT ERROR] Expected ISO 8601 (YYYY-MM-DDTHH:MM), got: '${post.scheduleDate}' (cleaned: '${scheduleDate}') - using current date`);
+          dateWarning = `⚠️ Invalid date format: ${post.scheduleDate}. Use YYYY-MM-DDTHH:MM`;
           parsedDate = new Date();
         }
         // Apply default time if needed
